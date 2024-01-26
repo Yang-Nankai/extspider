@@ -1,0 +1,83 @@
+# -*- coding: utf-8 -*-
+import copy
+from typing import Optional, Iterable, Self
+from datetime import date
+import json
+from dataclasses import dataclass, fields, asdict
+from extspider.common.utils import is_valid_extension_id
+from extspider.common.exception import InvalidExtensionIdentifier
+
+
+@dataclass(init=True, repr=True, eq=True, slots=True)
+class BaseExtensionDetails:
+    """The detail of a generic extension scraped from an online store"""
+    identifier: str
+    name: Optional[str] = None
+    version: Optional[str] = None
+    last_update: Optional[date] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    rating_average: Optional[float] = None
+    rating_count: Optional[int] = None
+    user_count: Optional[int] = None
+    manifest: Optional[dict] = None
+    byte_size: Optional[int] = None
+    developer_name: Optional[str] = None
+    recommended_extensions: Optional[list] = None
+    reviews: Optional[dict] = None
+
+    @property
+    def download_url(self) -> str:
+        raise NotImplementedError
+
+    def __hash__(self):
+        data_dict = asdict(self)
+        data_dict["manifest"] = json.dumps(self.manifest, sort_keys=True)
+        data_dict["recommended_extensions"] = json.dumps(
+            self.recommended_extensions, sort_keys=True
+        )
+        data_dict["reviews"] = json.dumps(self.reviews, sort_keys=True)
+        return hash(tuple(data_dict.values()))
+
+    def __iter__(self):
+        for field in fields(self):
+            yield getattr(self, field.name)
+
+    def __len__(self):
+        return len(fields(self))
+
+    def __post_init__(self):
+        if not is_valid_extension_id(self.identifier):
+            raise InvalidExtensionIdentifier(f"Invalid identifier in {repr(self)}")
+
+    def update_from(self, details: Iterable) -> None:
+        """Update all the fields from a structured Iterable"""
+        if len(self) != len(details):
+            raise ValueError(
+                "update_from() argument does not have enough items; "
+                f"expected {len(self)}, received {len(details)}"
+            )
+        for index, field in enumerate(fields(self)):
+            value = details[index]
+            if value is not None:
+                setattr(self, field.name, value)
+
+    def copy_from(self, other: Self) -> None:
+        """Copies all the fields from another instance"""
+        if not isinstance(other, type(self)):
+            raise TypeError(
+                "copy_from() argument must be an instance of the same class"
+            )
+
+        for field in fields(self):
+            value = getattr(other, field.name)
+            if value is not None:
+                setattr(self, field.name, value)
+
+    def copy(self):
+        """Returns a deep copy of the current instance"""
+        return copy.deepcopy(self)
+
+    def download(self, download_path: str) -> None:
+        """Download an extension CRX archive in the given path"""
+        raise NotImplementedError
