@@ -43,6 +43,8 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         self.backup_writter = csv.writer(
             open(f"{DATA_PATH}/categories_results.csv", "a", newline='', encoding='utf-8')
         )
+        self.ids_writter = open(f"{DATA_PATH}/extension_ids.txt", "a", encoding='utf-8')
+
 
     @property
     def request_body(self) -> Dict:
@@ -62,15 +64,13 @@ class ChromeCategoryScraper(BaseCategoryScraper):
                 break
             self.collect_and_store(data)
         print(f"Finished collecting {self.category_name}!")
-        with open(f"{DATA_PATH}/extension_ids.txt", "a", encoding='utf-8') as file:
-            for element in self.found_ids:
-                file.write(str(element) + '\n')
+
         print(f"Have written all extension ids!")
 
     def collect_and_store(self, data_list):
         for row in data_list:
             self.backup_writter.writerows(row)
-            self.found_ids.add(row[0][0])
+            self.ids_writter.write(str(row[0][0] + '\n'))
 
     def request_details(self) -> list[str]:
         response = requests.post(self.target_url, headers=HTTP_HEADERS, data=self.request_body)
