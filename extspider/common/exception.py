@@ -5,3 +5,9 @@ class extSpiderBaseException(Exception):
 
 class InvalidExtensionIdentifier(extSpiderBaseException):
     pass
+
+class CategoryCollectionError(extSpiderBaseException):
+    pass
+
+class CategoryRequestError(extSpiderBaseException):
+    pass
