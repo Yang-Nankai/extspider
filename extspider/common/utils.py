@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
+import requests
+import time
 
 
 def is_valid_extension_id(identifier: str) -> bool:
@@ -9,3 +11,28 @@ def is_valid_extension_id(identifier: str) -> bool:
     return bool(match)
 
 
+def request_retry_with_backoff(max_retries=3, retry_interval=1):
+    def decorator(func):
+        def _request_retry_with_backoff(*args, **kwargs):
+            retries = 0
+            result = False
+
+            while retries < max_retries:
+                try:
+                    result = func(*args, **kwargs)
+                except requests.exceptions.RequestException as e:
+                    # Log or handle the exception if needed
+                    print(f"RequestException: {e}, retrying...")
+                    result = False
+
+                if result:
+                    break
+
+                retries += 1
+                time.sleep(retry_interval)
+
+            return result
+
+        return _request_retry_with_backoff
+
+    return decorator

@@ -21,21 +21,21 @@ class TestChromeCategoryScraper(TestCase):
         self.assertEqual(res_body, scraper.request_body)
 
 
+    def test_setup(self):
+        scraper = ChromeCategoryScraper("productivity/communication")
+        progress = scraper.setup()
+        print(progress)
+
+
     @skip
     def test_start(self):
-        categories = ChromeCategoryScraper.get_categories()
-        test_category = categories[0]
-        self.assertIsInstance(test_category, str)
-        scraper = ChromeCategoryScraper(test_category)
+        scraper = ChromeCategoryScraper("productivity/communication")
         scraper.start()
 
 
     @skip
     def test_request_details(self):
-        categories = ChromeCategoryScraper.get_categories()
-        test_category = categories[0]
-        self.assertIsInstance(test_category, str)
-        scraper = ChromeCategoryScraper(test_category)
+        scraper = ChromeCategoryScraper("productivity/communication")
         details = scraper.request_details()
         self.assertIsInstance(details, list)
         self.assertGreater(len(details), 0)
