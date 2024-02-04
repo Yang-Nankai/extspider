@@ -11,3 +11,6 @@ class CategoryCollectionError(extSpiderBaseException):
 
 class CategoryRequestError(extSpiderBaseException):
     pass
+
+class ExtensionRequestError(extSpiderBaseException):
+    pass

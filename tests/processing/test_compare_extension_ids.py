@@ -8,8 +8,8 @@ from extspider.processing.compare_extension_ids import generate_diff_result, wri
 class TestCompareExtensionIds(TestCase):
 
     def test_generate_diff_result(self):
-        old_ids_filename = f"{DATA_PATH}/24_1_28_extension_ids.txt"
-        new_ids_filename = f"{DATA_PATH}/24_1_29_extension_ids.txt"
+        old_ids_filename = f"{DATA_PATH}/24_1_31_extension_ids.txt"
+        new_ids_filename = f"{DATA_PATH}/24_2_1_extension_ids.txt"
         diff_result = generate_diff_result(old_ids_filename, new_ids_filename)
 
         self.assertIsInstance(diff_result, list)

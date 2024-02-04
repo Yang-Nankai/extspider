@@ -10,13 +10,16 @@ from extspider.common.context import DATA_PATH
 from extspider.collection.category.base_category_scraper import BaseCategoryScraper
 from urllib3 import PoolManager
 from extspider.common.exception import CategoryCollectionError, CategoryRequestError
-from extspider.collection.parsers.chrome_parser import CategoryResponseMapper
+from extspider.collection.parsers.chrome_parser import ChromeCategoryResponseMapper
 from extspider.collection.progress_saver import ChromeProgressSaver
 from extspider.common.utils import request_retry_with_backoff
 
 requests.packages.urllib3.disable_warnings()
 
 CATEGORY_NAMES_PATTERN = re.compile(r',\\\"([a-z_]+/[a-z_]+)\\\"')
+DETAILS_PATTERN = re.compile(r'(\[\[.*\]\])')
+
+
 HTTP_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -42,7 +45,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
     def __init__(self, category_name: str, token: str = "") -> None:
         self.category_name = category_name
         self.source_path = BASE_SOURCE_PATH.format(category=category_name)
-        self.once_num = 100  # Num of once request extensions
+        self.once_num = 32  # Num of once request extensions
         self.token = token
         # TODO: Get request_id from html page automatically
         self.request_id = "zTyKYc"
@@ -88,7 +91,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         if response.status_code != 200:
             raise CategoryRequestError
         raw_data = self._res_to_details_list(response.text)
-        processed_data = CategoryResponseMapper.map_data_list(raw_data)
+        processed_data = ChromeCategoryResponseMapper.map_data_list(raw_data)
         # Replace '=' with Unicode '\u003d' for proper encoding
         self.token = processed_data[1]
         return processed_data[0]
@@ -104,8 +107,11 @@ class ChromeCategoryScraper(BaseCategoryScraper):
     @staticmethod
     def _res_to_details_list(response: str) -> List:
         if response:
-            details = json.loads(response.lstrip(")]}'\n"))
-            return json.loads(details[0][2])  # Return the extension details
+            # details = json.loads(response.lstrip(")]}'\n"))
+            # return json.loads(details[0][2])  # Return the extension details
+            details = re.findall(DETAILS_PATTERN, response)[0]
+            return json.loads(json.loads(details)[0][2])
+            # TODO: Need review
         else:
             # TODO: if not get the res throw Exception
             pass
@@ -129,7 +135,8 @@ class ChromeCategoryScraper(BaseCategoryScraper):
 
         categories = cls.get_categories()
         cls.start_new_scans(categories)
-        progress_info.save_progress(1)
+        # TODO: Need to be reviewed
+        progress_info.save_progress(1, [])
 
     @classmethod
     def resume_uncompleted_scan(cls, progress: Dict) -> None:
@@ -163,7 +170,3 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         progress_info = ChromeProgressSaver()
         progress_info.save_progress(0, cls.scraped_categories, category_name, break_token, str(error))
         exit(0)
-
-
-# TODO:
-# 了解('Connection aborted.', FileNotFoundError(2, 'No such file or directory'))出现报错的原因

@@ -24,7 +24,7 @@ class BaseExtensionDetails:
     byte_size: Optional[int] = None
     developer_name: Optional[str] = None
     recommended_extensions: Optional[list] = None
-    reviews: Optional[dict] = None
+    # reviews: Optional[dict] = None
 
     @property
     def download_url(self) -> str:
@@ -36,7 +36,7 @@ class BaseExtensionDetails:
         data_dict["recommended_extensions"] = json.dumps(
             self.recommended_extensions, sort_keys=True
         )
-        data_dict["reviews"] = json.dumps(self.reviews, sort_keys=True)
+        # data_dict["reviews"] = json.dumps(self.reviews, sort_keys=True)
         return hash(tuple(data_dict.values()))
 
     def __iter__(self):
