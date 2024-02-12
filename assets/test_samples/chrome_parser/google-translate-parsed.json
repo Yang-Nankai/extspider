@@ -1,0 +1,158 @@
+[
+  "aapbdbdomjkkjkaonfhkkikfgjllcleb",
+  "Google Translate",
+  "2.0.13",
+  1679480202,
+  "View translations easily as you browse the web. By the Google Translate team.",
+  "productivity/education",
+  4.334580186792763,
+  42507,
+  39000000,
+  {
+    "manifest_version": 2,
+    "description": "__MSG_5636646071825253269__",
+    "default_locale": "en",
+    "name": "__MSG_8969005060131950570__",
+    "permissions": [
+      "activeTab",
+      "contextMenus",
+      "storage"
+    ],
+    "content_security_policy": "script-src 'self' 'unsafe-eval' https://translate.googleapis.com; object-src 'self'",
+    "content_scripts": [
+      {
+        "matches": [
+          "<all_urls>"
+        ],
+        "js": [
+          "bubble_compiled.js"
+        ],
+        "css": [
+          "bubble_gss.css"
+        ],
+        "all_frames": true
+      }
+    ],
+    "background": {
+      "scripts": [
+        "injection.js",
+        "main_compiled.js"
+      ],
+      "persistent": false
+    },
+    "version": "2.0.13",
+    "browser_action": {
+      "default_icon": {
+        "19": "icons/19.png",
+        "38": "icons/38.png"
+      },
+      "default_title": "__MSG_2509634311667449183__",
+      "default_popup": "popup.html"
+    },
+    "web_accessible_resources": [
+      "popup_css_compiled.css",
+      "options.html"
+    ],
+    "options_page": "options.html",
+    "icons": {
+      "16": "icons/16.png",
+      "19": "icons/19.png",
+      "32": "icons/32.png",
+      "38": "icons/38.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    },
+    "update_url": "https://clients2.google.com/service/update2/crx",
+    "author": {
+      "email": "google-translate-chrome-extension-owners@google.com"
+    }
+  },
+  241664,
+  "google-translate-chrome-extension-owners",
+  [
+    [
+      "condlopdddofpgcdjfnoepbdkcgckmgb",
+      "Translator",
+      4.068965517241379,
+      29,
+      100000
+    ],
+    [
+      "pnpdnibdembnnlaiibkeandepjajegoi",
+      "Translator",
+      4.371428571428571,
+      35,
+      80000
+    ],
+    [
+      "jomhcfmjbfkigcepcfkcpknnppmdopmc",
+      "Google Translate Plus",
+      4.567441860465117,
+      430,
+      100000
+    ],
+    [
+      "fbimffnjoeobhjhochngikepgfejjmgj",
+      "Translate Selected Text",
+      3.812581913499345,
+      763,
+      100000
+    ],
+    [
+      "bebmphofpgkhclocdbgomhnjcpelbenh",
+      "Translator, dictionary - accurate translate",
+      4.478844169246646,
+      969,
+      800000
+    ],
+    [
+      "piojkjkndneggfaibepkmabjnkjlhlmk",
+      "Right Click Translate",
+      4.337078651685394,
+      89,
+      100000
+    ],
+    [
+      "ihmgiclibbndffejedjimfjmfoabpcke",
+      "Mate Translate – translator, dictionary",
+      4.330651400278509,
+      6463,
+      400000
+    ],
+    [
+      "noaijdpnepcgjemiklgfkcfbkokogabh",
+      "ImTranslator: Translator, Dictionary, TTS",
+      4.3874,
+      5000,
+      1000000
+    ],
+    [
+      "ibppednjgooiepmkgdcoppnmbhmieefh",
+      "Select to translate - Translator, Dictionary",
+      4.461538461538462,
+      4472,
+      1000000
+    ],
+    [
+      "ibplnjkanclpjokhdolnendpplpjiace",
+      "Simple Translate",
+      4.569078947368421,
+      304,
+      100000
+    ],
+    [
+      "gobpkdmjnhpopmpddhmhmbhkiienpfdo",
+      "Quick Translate",
+      3.8219178082191783,
+      73,
+      30000
+    ],
+    [
+      "ikhdkkncnoglghljlkmcimlnlhkeamad",
+      "划词翻译",
+      4.57737003058104,
+      1635,
+      300000
+    ]
+  ]
+]

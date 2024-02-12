@@ -10,4 +10,5 @@ CONF_PATH = os.path.join(PROJECT_ROOT, "conf")
 ASSETS_PATH = os.path.join(PROJECT_ROOT, "assets")
 TESTS_PATH = os.path.join(PROJECT_ROOT, "tests")
 
+SCRAPER_CONF_PATH = os.path.join(CONF_PATH, "scraper_configuration.yaml")
 TEST_SAMPLES_PATH = os.path.join(ASSETS_PATH, "test_samples")

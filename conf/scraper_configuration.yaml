@@ -1,0 +1,23 @@
+scraper_parameters:
+  # Number of concurrent CollectorWorker threads
+  # NOTE: start with amount of cores in your CPU;
+  # then readjust to improve data collection performance
+  collectors_amount: 8
+  # Maximum amount of extension identifiers in collection queue
+  # NOTE: set this to 0 for making the queue size unlimited
+  backlog_limit: 0
+  # Maximum amount of time to wait for new identifiers to load
+  timeout_seconds: 3600
+  # Frequency of progress updates
+  update_seconds: 10
+  # URL to the Chrome Web Store
+  store_url: https://chrome.google.com/webstore/category/extensions
+  # CSS selectors used by the web scraper
+  css_selectors:
+    tile: a.a-u[role='gridcell']
+    name: .e-f-w
+    category: .e-f-yb-w .e-f-y
+    download_count: .e-f-yb-w .e-f-ih
+    rating_count: e-f-yb-w .nAtiRe
+    rating_percentage: .e-f-yb-w .t9Fs9c
+    version: .C-b-p-D-Xe.h-C-b-p-D-md

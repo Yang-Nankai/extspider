@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import csv
 import re
-import time
-
 import requests
 import json
 from typing import Dict, List
@@ -13,7 +11,7 @@ from extspider.common.exception import CategoryCollectionError, CategoryRequestE
 from extspider.collection.parsers.chrome_parser import ChromeCategoryResponseMapper
 from extspider.collection.progress_saver import ChromeProgressSaver
 from extspider.common.utils import request_retry_with_backoff
-
+from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
 requests.packages.urllib3.disable_warnings()
 
 CATEGORY_NAMES_PATTERN = re.compile(r',\\\"([a-z_]+/[a-z_]+)\\\"')
@@ -45,7 +43,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
     def __init__(self, category_name: str, token: str = "") -> None:
         self.category_name = category_name
         self.source_path = BASE_SOURCE_PATH.format(category=category_name)
-        self.once_num = 32  # Num of once request extensions
+        self.once_num = 64  # Num of once request extensions
         self.token = token
         # TODO: Get request_id from html page automatically
         self.request_id = "zTyKYc"
@@ -82,8 +80,17 @@ class ChromeCategoryScraper(BaseCategoryScraper):
 
     def collect_and_store(self, data_list):
         for row in data_list:
-            self.backup_writter.writerows(row)
-            self.ids_writter.write(str(row[0][0] + '\n'))
+            # TODO: Need to be changed
+            # self.backup_writter.writerows(row)
+            if row[0][0] not in self.found_ids:
+                # TODO: 这里存在user_count不存在的情况，需要进行考虑
+                extension = ChromeExtensionDetails(row[0][0], name=row[0][2],
+                                                   rating_average=row[0][3],
+                                                   rating_count=row[0][4])
+                self.ids_writter.write(str(row[0][0] + '\n'))
+                self.found_ids.add(extension.identifier)
+                self.results.append(extension)
+
 
     @request_retry_with_backoff(max_retries=5, retry_interval=2)
     def request_details(self) -> list[str]:
