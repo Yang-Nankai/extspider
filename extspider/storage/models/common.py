@@ -6,8 +6,8 @@ from sqlalchemy.sql import text
 from sqlalchemy import create_engine
 from abc import ABC as AbstractClass, abstractmethod
 
-
 TEST_RECORDS_AMOUNT = 10
+
 
 def get_invalid_characters_from_id(id: str) -> str:
     valid_characters = "abcdefghijklmnop"
@@ -32,11 +32,10 @@ def is_valid_extension_id(id: str) -> bool:
 
     found_invalid_characters = get_invalid_characters_from_id(id)
     if len(found_invalid_characters) > 0:
-        # A value different than [a-p] was found
+        # A value different from [a-p] was found
         return False
 
     return True
-
 
 
 class BaseModel(DeclarativeBase):
@@ -44,6 +43,7 @@ class BaseModel(DeclarativeBase):
     BaseModel base class from which all other classes mapping the database
     tables will inherit from
     """
+
 
 class BaseModelTestCase(AbstractClass):
 
@@ -56,30 +56,24 @@ class BaseModelTestCase(AbstractClass):
         BaseModel.metadata.create_all(self.engine)
         self.session = Session(self.engine)
 
-
     def tearDown(self) -> None:
         self.session.close()
         self.engine.dispose()
 
-
     def assertNoResults(self) -> None:
         raise NotImplementedError
-
 
     @abstractmethod
     def test_insertion(self):
         pass
 
-
     @abstractmethod
     def test_update(self):
         pass
 
-
     @abstractmethod
     def test_deletion(self):
         pass
-
 
     @abstractmethod
     def test_parameter_validation(self):

@@ -2,12 +2,7 @@
 import json
 import os
 from unittest import TestCase
-
-import requests
-from extspider.common.exception import ExtensionRequestError
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
-from extspider.collection.parsers.chrome_parser import ChromeExtensionResponseMapper
-
 from extspider.common.context import TEST_SAMPLES_PATH
 
 SAMPLES_ROOT = os.path.join(TEST_SAMPLES_PATH, "chrome_extension_details")
@@ -26,22 +21,27 @@ HTTP_HEADERS = {
 
 class TestChromeExtensionDetails(TestCase):
 
+    def setUp(self) -> None:
+        self.extension = ChromeExtensionDetails("knkpjhkhlfebmefnommmehegjgglnkdm")
+
     def test_get_extension_detail(self):
-        extension = ChromeExtensionDetails("knkpjhkhlfebmefnommmehegjgglnkdm")
-        processed_data = extension.get_extension_detail()
-        self.assertIsInstance(processed_data, list)
+        processed_data = self.extension.get_extension_detail()
         self.assertIsNotNone(processed_data)
-        self.assertGreater(len(processed_data), 0)
+        self.assertEqual(len(processed_data), 13)
 
     def test_update_details(self):
-        extension = ChromeExtensionDetails("knkpjhkhlfebmefnommmehegjgglnkdm")
-        has_changed = extension.update_details()
+        has_changed = self.extension.update_details()
         self.assertTrue(has_changed)
-        has_changed = extension.update_details()
+        has_changed = self.extension.update_details()
         self.assertFalse(has_changed)
 
     def test_download(self):
-        extension = ChromeExtensionDetails("knkpjhkhlfebmefnommmehegjgglnkdm")
-        extension.download(TEST_DOWNLOAD_PATH)
+        self.extension.download(TEST_DOWNLOAD_PATH)
         file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
         self.assertTrue(file_exists)
+
+    def tearDown(self) -> None:
+        file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
+        if file_exists:
+            os.unlink(TEST_DOWNLOAD_PATH)
+

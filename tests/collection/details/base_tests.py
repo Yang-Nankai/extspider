@@ -12,7 +12,6 @@ class BaseTests:
         def details_class(self):
             raise NotImplementedError
 
-
         def get_test_details(
                 self,
                 identifier="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -33,14 +32,12 @@ class BaseTests:
                 developer_name="Sample Developer",
                 recommended_extensions=["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                                         "cccccccccccccccccccccccccccccccc"],
-                reviews={"Luna": "This is very good extension."}
+                # reviews={"Luna": "This is very good extension."}
             )
-
 
         def test_missing_identifier(self):
             with self.assertRaises(TypeError):
                 metadata = self.details_class()
-
 
         def test_copy(self):
             original = self.get_test_details()
@@ -60,7 +57,6 @@ class BaseTests:
             # Ensuring that non-mutable fields are copied correctly
             self.assertEqual(original.name, copied.name)
 
-
         def test_tuple(self):
             """Check if the tuple() function works"""
             identifier = "a" * 32
@@ -73,7 +69,6 @@ class BaseTests:
             for og_attr, cp_attr in zip(original_tuple, copied_tuple):
                 self.assertEqual(og_attr, cp_attr)
 
-
         def test_equals(self):
             """Check if the `==` operator works"""
             identifier = "a" * 32
@@ -84,7 +79,6 @@ class BaseTests:
 
             self.assertEqual(original, copided)
             self.assertNotEqual(original, different)
-
 
         def test_hash(self):
             """Check if the hash() function works"""
@@ -101,10 +95,8 @@ class BaseTests:
             self.assertEqual(original_hash, copied_hash)
             self.assertNotEqual(original_hash, different_hash)
 
-
         def test_download(self):
             raise NotImplementedError
-
 
         def test_update_details(self):
             raise NotImplementedError

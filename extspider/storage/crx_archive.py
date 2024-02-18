@@ -4,7 +4,6 @@ import shutil
 import os
 import struct
 from zipfile import ZipFile, BadZipFile
-
 from typing import Optional, List, Set
 from hashlib import md5, sha256
 from io import BufferedReader, BytesIO
@@ -18,14 +17,16 @@ class BadCrx(IOError):
 
 
 class CrxArchive:
+    # TODO: 这个类是否还有必要，我只做permission的工作，只需要存储extension的信息即可
+    # 但是这里没必要去删除
     BUFFER_SIZE = 65536  # 64kb
 
     def __init__(self, extension_id: str, crx_path: str,
                  custom_name: str = None) -> None:
         self.crx_path = crx_path
         self.extension_id = extension_id
-        self.digest = None
-        self.is_corrupted = None
+        self.digest = None # TODO: digest没有必要了
+        self.is_corrupted = None  # TODO: is_corrupted是否有必要？
         self.json_manifest = None
         self.archive_namelist = None
         self.custom_name = custom_name

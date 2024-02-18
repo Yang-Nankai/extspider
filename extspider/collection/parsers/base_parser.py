@@ -2,17 +2,6 @@
 import abc
 from abc import ABC as AbstractClass
 from typing import Iterable, Callable, Any, Optional
-from enum import IntEnum
-
-
-class CollectedDataType(IntEnum):
-    UNKNOWN = -1
-    CATEGORY = 1
-    EXTENSION = 2
-
-    @classmethod
-    def _missing_(cls, _) -> str:
-        return cls.UNKNOWN
 
 
 class DataMapper(AbstractClass):

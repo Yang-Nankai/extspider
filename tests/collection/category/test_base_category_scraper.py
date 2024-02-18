@@ -2,6 +2,7 @@
 from tests.collection.category.base_tests import BaseTests as BT
 from extspider.collection.category.base_category_scraper import BaseCategoryScraper
 
+
 class TestBaseCategoryScraper(BT.CategoryTestsCase):
 
     @property

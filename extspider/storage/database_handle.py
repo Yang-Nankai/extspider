@@ -1,4 +1,5 @@
 import os
+from datetime import date
 from typing import Optional, Dict
 from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import scoped_session as ScopedSession, sessionmaker
@@ -6,10 +7,8 @@ from sqlalchemy.sql import text
 
 from extspider.common.configuration import DB_PATH
 from extspider.storage.models.common import BaseModel
-from extspider.storage.models.archive import Archive, Fingerprint
 from extspider.storage.models.extension import Extension, ExtensionCategory
-
-
+from extspider.storage.models.permission import ExtensionPermission
 DATABASE_NAME = "database.sqlite"
 DATABASE_PATH = os.path.join(DB_PATH, DATABASE_NAME)
 
@@ -20,12 +19,11 @@ class DatabaseHandle:
     database through SQLAlchemy Core
     """
 
-    engine:Engine = None
-    Session:ScopedSession = None
-
+    engine: Engine = None
+    Session: ScopedSession = None
 
     @classmethod
-    def setup_engine(cls, absolute_path:str=DATABASE_PATH) -> None:
+    def setup_engine(cls, absolute_path: str = DATABASE_PATH) -> None:
         if cls.engine is not None:
             return
 
@@ -37,15 +35,13 @@ class DatabaseHandle:
             connection.execute(text('pragma foreign_keys=on'))
 
         session_factory = sessionmaker(bind=cls.engine)
-        cls.Session = ScopedSession(session_factory) # thread-safe(-ish)
-                                                     # still throws errors if
-                                                     # concurrency is high
-
+        cls.Session = ScopedSession(session_factory)  # thread-safe(-ish)
+        # still throws errors if
+        # concurrency is high
 
     @classmethod
     def dispose(cls) -> None:
         cls.engine.dispose()
-
 
     @classmethod
     def erase(cls) -> None:
@@ -59,17 +55,15 @@ class DatabaseHandle:
         if os.path.isfile(engine_url):
             os.remove(engine_url)
 
-
     @classmethod
-    def get_session(cls, engine_path:str=DATABASE_PATH) -> ScopedSession:
+    def get_session(cls, engine_path: str = DATABASE_PATH) -> ScopedSession:
         cls.setup_engine(engine_path)
         return cls.Session()
 
-
     @classmethod
     def get_or_create_extension(cls,
-                                session:ScopedSession,
-                                extension_id:str) -> Extension:
+                                session: ScopedSession,
+                                extension_id: str) -> Extension:
         extension = session.query(
             Extension
         ).where(Extension.id == extension_id).first()
@@ -81,12 +75,11 @@ class DatabaseHandle:
 
         return extension
 
-
     @classmethod
     def get_or_create_extension_category(
-        cls,
-        session:ScopedSession,
-        category_name:str
+            cls,
+            session: ScopedSession,
+            category_name: str
     ) -> ExtensionCategory:
 
         category = session.query(
@@ -100,34 +93,19 @@ class DatabaseHandle:
 
         return category
 
-
-    @classmethod
-    def get_or_create_archive(cls,
-                              session:ScopedSession,
-                              extension_id:str,
-                              digest:str) -> Archive:
-        archive = session.query(
-            Archive
-        ).where(Archive.digest == digest,
-                Archive.extension_id == extension_id).first()
-
-        if archive is None:
-            archive = Archive(digest, extension_id)
-            session.add(archive)
-            session.commit()
-
-        return archive
-
-
     @classmethod
     def store_extension(cls,
-                        extension_id:str,
-                        name:Optional[str],
-                        category_name:Optional[str],
-                        download_count:Optional[int],
-                        rating_count:Optional[int],
-                        rating_percentage:Optional[float],
-                        latest_version:Optional[str]) -> Extension:
+                        extension_id: str,
+                        name: Optional[str],
+                        developer_name: Optional[str],
+                        category_name: Optional[str],
+                        download_count: Optional[int],
+                        rating_count: Optional[int],
+                        rating_average: Optional[float],
+                        manifest: Optional[Dict],
+                        byte_size: Optional[int],
+                        latest_version: Optional[str],
+                        updated_at: Optional[date]) -> Extension:
         with cls.get_session() as session:
             category_id = None
             if category_name is not None:
@@ -136,43 +114,31 @@ class DatabaseHandle:
                     category_name
                 )
                 category_id = category.id
-
-
             extension = Extension(id=extension_id,
                                   name=name,
+                                  developer_name=developer_name,
                                   category_id=category_id,
                                   download_count=download_count,
                                   rating_count=rating_count,
-                                  rating_percentage=rating_percentage,
-                                  latest_version=latest_version)
+                                  rating_average=rating_average,
+                                  manifest=manifest,
+                                  byte_size=byte_size,
+                                  latest_version=latest_version,
+                                  updated_at=updated_at)
+
+            permission = ExtensionPermission(
+                extension_id=extension_id,
+                extension_version=latest_version,
+                manifest_version=extension.manifest_version,
+                permissions=extension.manifest_permissions,
+                optional_permissions=extension.manifest_optional_permissions,
+                content_scripts_matches=extension.manifest_content_scripts_matches,
+                host_permissions=extension.manifest_host_permissions,
+                optional_host_permissions=extension.manifest_optional_host_permissions
+            )
+
             session.merge(extension)
+            session.merge(permission)
             session.commit()
 
         return extension
-
-
-    @classmethod
-    def store_archive(cls,
-                      extension_id:str,
-                      digest:Optional[str],
-                      manifest:Optional[Dict],
-                      is_corrupted:Optional[bool],
-                      byte_size:Optional[int],
-                      fingerprints:Optional[list[tuple]]=None) -> Archive:
-        with cls.get_session() as session:
-            archive = Archive(digest=digest,
-                              extension_id=extension_id,
-                              manifest=manifest,
-                              is_corrupted=is_corrupted,
-                              byte_size=byte_size)
-            if fingerprints is not None:
-                for resource, match in fingerprints:
-                    fingerprint = Fingerprint(archive_digest=digest,
-                                              resource=resource,
-                                              match_pattern=match)
-                    archive.fingerprints.append(fingerprint)
-
-            session.merge(archive)
-            session.commit()
-
-        return archive

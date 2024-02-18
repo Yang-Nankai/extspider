@@ -21,10 +21,10 @@ class BaseExtensionDetails:
     rating_count: Optional[int] = None
     user_count: Optional[int] = None
     manifest: Optional[dict] = None
-    byte_size: Optional[int] = None
+    # TODO: Need review, byte_size is `float` or `int`.
+    byte_size: Optional[float] = None
     developer_name: Optional[str] = None
     recommended_extensions: Optional[list] = None
-    # reviews: Optional[dict] = None
 
     @property
     def download_url(self) -> str:
@@ -36,8 +36,16 @@ class BaseExtensionDetails:
         data_dict["recommended_extensions"] = json.dumps(
             self.recommended_extensions, sort_keys=True
         )
-        # data_dict["reviews"] = json.dumps(self.reviews, sort_keys=True)
         return hash(tuple(data_dict.values()))
+
+    @classmethod
+    def get_attribute_index(cls, attribute: str) -> int:
+        """Returns the index of the given attribute in the tuple representation
+        of the object. If not found, returns -1"""
+        for index, field in enumerate(fields(cls)):
+            if field.name == attribute:
+                return index
+        return -1  # Attribute not found
 
     def __iter__(self):
         for field in fields(self):

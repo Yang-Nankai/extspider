@@ -5,7 +5,6 @@ from extspider.storage.database_handle import DatabaseHandle
 from extspider.common.configuration import DB_PATH
 from extspider.storage.models.extension import ExtensionCategory, Extension
 
-
 DATABASE_NAME = "test_database.sqlite"
 DATABASE_PATH = os.path.join(DB_PATH, DATABASE_NAME)
 
@@ -21,26 +20,21 @@ class TestDatabaseHandle(TestCase):
         if os.path.isfile(DATABASE_PATH):
             os.remove(DATABASE_PATH)
 
-
     def setUp(self) -> None:
         DatabaseHandle.setup_engine(DATABASE_PATH)
 
-
     def test_setup_engine(self):
         self.assertTrue(os.path.isfile(DATABASE_PATH))
-
 
     def test_get_session(self):
         session = DatabaseHandle.get_session()
 
         self.assertIsNotNone(session)
 
-
     def test_erase(self):
         DatabaseHandle.erase()
         self.assertIsNone(DatabaseHandle.engine)
         self.assertFalse(os.path.isfile(DATABASE_PATH))
-
 
     def test_get_or_create_extension(self):
         session = DatabaseHandle.get_session()
@@ -53,7 +47,6 @@ class TestDatabaseHandle(TestCase):
         result = session.query(Extension).all()
         self.assertEqual(result, [created_extension])
 
-
         gotten_extension = DatabaseHandle.get_or_create_extension(
             session, "a" * 32
         )
@@ -62,7 +55,6 @@ class TestDatabaseHandle(TestCase):
         result = session.query(Extension).all()
         self.assertEqual(result, [gotten_extension])
         self.assertEqual(gotten_extension, created_extension)
-
 
     def test_get_or_create_extension_category(self):
         session = DatabaseHandle.get_session()
@@ -88,16 +80,15 @@ class TestDatabaseHandle(TestCase):
         self.assertEqual(created_category, gotten_category)
         self.assertEqual(gotten_category.name, test_category_name)
 
-
     def test_store_extension(self):
         test_arguments = {
-            "extension_id"      : "a" * 32,
-            "name"              : "Test Extension Name",
-            "category_name"     : "test_category",
-            "download_count"    : 100000,
-            "rating_count"      : 1234,
-            "rating_percentage" : 89.1,
-            "latest_version"    : "1.2.345"
+            "extension_id": "a" * 32,
+            "name": "Test Extension Name",
+            "category_name": "test_category",
+            "download_count": 100000,
+            "rating_count": 1234,
+            "rating_percentage": 89.1,
+            "latest_version": "1.2.345"
         }
         stored_extension = DatabaseHandle.store_extension(
             test_arguments["extension_id"],
@@ -134,7 +125,6 @@ class TestDatabaseHandle(TestCase):
             )
 
         self.assertEqual(selected_extension.id, stored_extension.id)
-
 
     def test_store_archive(self):
         with DatabaseHandle.get_session() as session:

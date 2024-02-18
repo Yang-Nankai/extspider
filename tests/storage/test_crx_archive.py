@@ -6,7 +6,6 @@ from unittest import TestCase, skipIf, skip
 from extspider.storage.crx_archive import CrxArchive, BadCrx
 from extspider.common.context import ASSETS_PATH, TEST_SAMPLES_PATH
 
-
 SAMPLES_ROOT = os.path.join(TEST_SAMPLES_PATH, "crx_archive")
 SAMPLE_ARCHIVE_PATH = os.path.join(SAMPLES_ROOT,
                                    "sample_extension.crx")
@@ -24,7 +23,6 @@ class TestCrxArchive(TestCase):
         shutil.copy(SAMPLE_ARCHIVE_PATH,
                     SAMPLE_ARCHIVE_TEMPORARY)
 
-
     def tearDown(self) -> None:
         for sample_archive in glob(f"{SAMPLES_ROOT}/*.crx"):
             os.remove(sample_archive)
@@ -35,22 +33,19 @@ class TestCrxArchive(TestCase):
         shutil.move(SAMPLE_ARCHIVE_TEMPORARY,
                     SAMPLE_ARCHIVE_PATH)
 
-
-    def get_sample_archive(self, custom_name:str=None) -> CrxArchive:
+    def get_sample_archive(self, custom_name: str = None) -> CrxArchive:
         sample_id = "a" * 32
-        archive = CrxArchive(sample_id, SAMPLE_ARCHIVE_PATH, 
+        archive = CrxArchive(sample_id, SAMPLE_ARCHIVE_PATH,
                              custom_name=custom_name)
         archive.load_manifest()
         archive.load_namelist()
         return archive
-
 
     def test_archive_creation(self):
         archive = self.get_sample_archive()
         self.assertIsNotNone(archive.json_manifest)
         self.assertEqual(type(archive.json_manifest), dict)
         self.assertGreater(len(archive.archive_namelist), 0)
-
 
     def test_custom_name(self):
         custom_name = "test_archive.crx"
@@ -60,7 +55,6 @@ class TestCrxArchive(TestCase):
         archive_exists = os.path.isfile(expected_path)
         self.assertTrue(archive_exists)
 
-
     def test_wildcard_to_paths(self):
         archive = self.get_sample_archive()
         resources = archive.json_manifest.get("web_accessible_resources")
@@ -69,7 +63,6 @@ class TestCrxArchive(TestCase):
 
         paths = archive.wildcard_to_paths("images/*")
         self.assertGreater(len(paths), 0)
-
 
     def test_process_resource(self):
         archive = self.get_sample_archive()
@@ -85,7 +78,6 @@ class TestCrxArchive(TestCase):
 
         non_existing_paths = archive.process_resource("/this/does/not/exist.css")
         self.assertEqual(len(non_existing_paths), 0)
-
 
     def test_extract_fingerprints(self):
         archive = self.get_sample_archive()
@@ -108,7 +100,7 @@ class TestCrxArchive(TestCase):
                 continue
 
             self.assertTrue(isinstance(fingerprints, list))
-            manifest:dict = crx.json_manifest
+            manifest: dict = crx.json_manifest
             if manifest is None:
                 self.assertTrue(crx.is_corrupted)
                 continue

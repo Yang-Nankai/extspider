@@ -2,13 +2,10 @@ import shutil
 import os
 from zipfile import ZipFile
 from unittest import TestCase
-
 from extspider.storage.archive_handle import (ArchiveHandle,
-                                                    EXTENSIONS_DIRECTORY_PATH)
+                                              EXTENSIONS_DIRECTORY_PATH)
 from extspider.storage.database_handle import DatabaseHandle
-from extspider.storage.models.extension import Extension
 from extspider.common.context import TEST_SAMPLES_PATH
-
 
 ARCHIVE_HANDLE_SAMPLES = os.path.join(TEST_SAMPLES_PATH, "archive_handle")
 ARCHIVE_CRX_PATH = os.path.join(ARCHIVE_HANDLE_SAMPLES, "sample_extension.crx")
@@ -24,18 +21,15 @@ class TestArchiveHandle(TestCase):
         with ZipFile(ARCHIVE_ZIP_PATH, "r") as zip_reference:
             zip_reference.extractall(ARCHIVE_EXTRACTED_PATH)
 
-
     @classmethod
     def tearDownClass(cls) -> None:
         shutil.rmtree(ARCHIVE_EXTRACTED_PATH)
 
-
     def setUp(self) -> None:
         self.rename_actual_directory_path()
         if not os.path.isfile(self.temporary_sample_extension_path):
-            shutil.copy(self.sample_extension_path,
+            shutil.move(self.sample_extension_path,
                         f"{self.sample_extension_path}.backup")
-
 
     def tearDown(self) -> None:
         if os.path.exists(EXTENSIONS_DIRECTORY_PATH):
@@ -53,43 +47,35 @@ class TestArchiveHandle(TestCase):
 
         self.reinstate_actual_directory_path()
 
-
     @property
     def temporary_directory_path(self) -> str:
         return f"{EXTENSIONS_DIRECTORY_PATH}.actual"
-
 
     @property
     def temporary_sample_extension_path(self) -> str:
         return f"{self.sample_extension_path}.backup"
 
-
     @property
     def sample_directory_path(self) -> str:
         return os.path.join(ARCHIVE_HANDLE_SAMPLES, "sample_chrome_extensions")
-
 
     @property
     def sample_extension_path(self) -> str:
         return os.path.join(ARCHIVE_HANDLE_SAMPLES,
                             "sample_extension.crx")
 
-
     def create_sample_directory(self) -> str:
         directory_path = self.sample_directory_path
         os.mkdir(directory_path)
         return directory_path
 
-
     def rename_actual_directory_path(self):
         if os.path.exists(EXTENSIONS_DIRECTORY_PATH):
             os.rename(EXTENSIONS_DIRECTORY_PATH, self.temporary_directory_path)
 
-
     def reinstate_actual_directory_path(self):
         if os.path.exists(self.temporary_directory_path):
             os.rename(self.temporary_directory_path, EXTENSIONS_DIRECTORY_PATH)
-
 
     def test_empty_setup(self):
         self.assertFalse(os.path.exists(EXTENSIONS_DIRECTORY_PATH))
@@ -97,7 +83,6 @@ class TestArchiveHandle(TestCase):
         ArchiveHandle.setup()
         self.assertTrue(os.path.exists(EXTENSIONS_DIRECTORY_PATH))
         self.assertTrue(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
-
 
     def test_linked_setup(self):
         sample_directory_path = self.create_sample_directory()
@@ -114,29 +99,27 @@ class TestArchiveHandle(TestCase):
         self.assertTrue(os.path.isfile(link_file_path))
         self.assertTrue(os.path.isfile(actual_file_path))
 
-
     def test_store_extension_archive(self):
         ArchiveHandle.setup()
         test_extension_id = "a" * 32
         extension = DatabaseHandle.store_extension(
             test_extension_id,
-            *([None] * 6) # leave remaining arguments empty
+            *([None] * 6)  # leave remaining arguments empty
         )
         digest = ArchiveHandle.store_extension_archive(
             extension.id,
             self.sample_extension_path
         ).digest
-        expected_base_directory = ArchiveHandle.get_archive_storage_path(
+        expected_base_directory = ArchiveHandle.get_extension_storage_directory(
             extension.id,
             "3.2"
         )
         expected_crx_path = os.path.join(expected_base_directory,
-                                         f"{digest}.crx")
+                                         f'{extension.id}.3.2.crx')
         expected_manifest_path = os.path.join(expected_base_directory,
                                               "manifest.json")
         self.assertTrue(os.path.isfile(expected_crx_path))
         self.assertTrue(os.path.isfile(expected_manifest_path))
-
 
     def test_get_version_from_manifest(self):
         sample_manifest_path = os.path.join(ARCHIVE_HANDLE_SAMPLES,
