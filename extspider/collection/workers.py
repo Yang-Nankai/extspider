@@ -214,6 +214,7 @@ class CollectorWorker(Worker):
                 extension.version
             )
             extension.download(download_path)
+            return True
 
         except Exception as error:
             self.log(
