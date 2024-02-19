@@ -2,14 +2,14 @@ scraper_parameters:
   # Number of concurrent CollectorWorker threads
   # NOTE: start with amount of cores in your CPU;
   # then readjust to improve data collection performance
-  collectors_amount: 4
+  collectors_amount: 8
   # Maximum amount of extension identifiers in collection queue
   # NOTE: set this to 0 for making the queue size unlimited
   backlog_limit: 0
   # Maximum amount of time to wait for new identifiers to load
   timeout_seconds: 3600
   # Frequency of progress updates
-  update_seconds: 10
+  update_seconds: 30
   # Version of Chrome Browser
   prod_version: 121.0.6167.161
   # URL to the Chrome Web Store

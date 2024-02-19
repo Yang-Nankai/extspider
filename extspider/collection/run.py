@@ -11,7 +11,7 @@ def run() -> None:
     collector_workers = [CollectorWorker(collector_number + 1)
                          for collector_number in range(COLLECTORS_AMOUNT)]
     database_worker = DatabaseWorker()
-    progress_tracker = ProgressTrackerWorker(update_seconds=UPDATE_SECONDS)
+    progress_tracker = ProgressTrackerWorker(update_seconds=UPDATE_SECONDS, enable_feishu=True)
 
     with ThreadPoolExecutor() as executor:
         executor.submit(progress_tracker.run)

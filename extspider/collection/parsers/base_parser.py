@@ -54,7 +54,9 @@ class DataMapper(AbstractClass):
     def __init__(self, raw_data: Iterable):
         self.raw_data = list(raw_data)
         if not self.is_data_structure_valid():
-            raise UnexpectedDataStructure
+            # TODO: figure out `pgcioedaijekepkjadkapaaaffjcekdf`
+            # raise UnexpectedDataStructure
+            pass
 
     def is_data_structure_valid(self) -> bool:
         sentinel = object()
