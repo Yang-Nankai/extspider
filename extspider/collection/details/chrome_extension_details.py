@@ -118,6 +118,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         self.load_manifest(download_path)
         return os.path.exists(download_path)
 
+    @request_retry_with_backoff(max_retries=5, retry_interval=2)
     def get_extension_detail(self) -> List:
         response = requests.post(self.details_url,
                                  headers=HTTP_HEADERS,
