@@ -61,9 +61,9 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         data = [self.identifier, self.version]
         self.unique_data_writter.writerow(data)
 
-    def __del__(self):
-        if not self.unqiue_file_handle.closed:
-            self.unqiue_file_handle.close()
+    # def __del__(self):
+    #     if not self.unqiue_file_handle.closed:
+    #         self.unqiue_file_handle.close()
 
     @staticmethod
     def _response_to_details_list(response: str) -> List:
