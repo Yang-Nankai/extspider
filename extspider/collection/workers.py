@@ -378,13 +378,13 @@ class ProgressTrackerWorker(Worker):
         delta = timedelta(seconds=self.elapsed_seconds)
         return str(delta).split(".")[0]  # removing microseconds
 
-    @property
-    def archives_per_second(self) -> Optional[float]:
-        try:
-            ratio = self.elapsed_seconds / self.saved_archives_count.count
-        except ZeroDivisionError:
-            return None
-        return round(ratio, 2)
+    # @property
+    # def archives_per_second(self) -> Optional[float]:
+    #     try:
+    #         ratio = self.elapsed_seconds / self.saved_archives_count.count
+    #     except ZeroDivisionError:
+    #         return None
+    #     return round(ratio, 2)
 
     @property
     def progress_status(self) -> str:
@@ -410,7 +410,7 @@ class ProgressTrackerWorker(Worker):
             f"Extension metadata save: {self.failed_extension_saves.qsize()}\n"
             f"-- Runtime metrics --\n"
             f"Elapsed time: {self.elapsed_time_printable}\n"
-            f"Average scrape-to-save time: {self.archives_per_second} seconds"
+            # f"Average scrape-to-save time: {self.archives_per_second} seconds"
         )
 
     def send_status_update(self) -> None:
