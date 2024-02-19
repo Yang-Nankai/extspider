@@ -44,7 +44,8 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
     # TODO: 这里需要严重review，对于test也不好写
     unique_data_filename = get_date_file_name("unique_data.csv")
-    unqiue_file_handle = open(f"{DATA_PATH}/{unique_data_filename}", "a", encoding='utf-8')
+    with open(f"{DATA_PATH}/{unique_data_filename}", "a", encoding='utf-8') as handle:
+        unqiue_file_handle = handle
     unique_data_writter = csv.writer(unqiue_file_handle)
 
     def write_unique_data(self):

@@ -1,0 +1,5 @@
+matplotlib==3.7.0
+PyYAML==6.0.1
+PyYAML==6.0.1
+Requests==2.31.0
+SQLAlchemy==2.0.22
