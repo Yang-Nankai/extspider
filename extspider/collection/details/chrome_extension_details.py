@@ -126,6 +126,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         if response.status_code != 200:
             raise ExtensionRequestDetailError
         details_data = self._response_to_details_list(response.text)
+        print(json.dumps(details_data))
         processed_data = ChromeExtensionDetailsMapper.map_data_list(details_data)
         return processed_data
 

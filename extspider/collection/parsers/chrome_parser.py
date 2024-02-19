@@ -15,7 +15,8 @@ class PartialDetailsMapper(DataMapper):
         "name": 2,
         "rating_average": 3,
         "rating_count": 4,
-        "user_estimate": 14
+        # TODO: 先去掉user_estimate，这里存在一个问题有时候只有15字段，有时候有16字段
+        # "user_estimate": 14
     }
 
     @classmethod
