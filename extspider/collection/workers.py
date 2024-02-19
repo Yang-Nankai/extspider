@@ -420,7 +420,7 @@ class ProgressTrackerWorker(Worker):
         print(status)
 
         if self.is_feishu_enabled:
-            self.messenger.update_message(status)
+            self.messenger.send_message(status)
 
     def work(self) -> None:
         if DatabaseWorker.finished_event.is_set():
