@@ -205,7 +205,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
     # TODO: 这里需不需要还是怎么更改位置
     def save_metadata(self) -> None:
-        DatabaseHandle.store_extension(self.identifier,
+        extension = DatabaseHandle.store_extension(self.identifier,
                                        self.name,
                                        self.developer_name,
                                        self.category,
@@ -217,4 +217,4 @@ class ChromeExtensionDetails(BaseExtensionDetails):
                                        self.version,
                                        self.last_update)
         # TODO: 存储permission
-        DatabaseHandle.store_extension_permission(self)
+        DatabaseHandle.store_extension_permission(extension)
