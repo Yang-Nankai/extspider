@@ -34,17 +34,17 @@ class BadCrx(IOError):
     pass
 
 
-# TODO: 需要改变
-def get_date_file_name(original_filename: str) -> str:
-    current_date = datetime.datetime.now().strftime("%Y_%m_%d")
-    return f"{current_date}_{original_filename}"
-
-
-# TODO: 这里需要严重review，对于test也不好写
-unique_data_filename = get_date_file_name("unique_data.csv")
-with open(f"{DATA_PATH}/{unique_data_filename}", "a", encoding='utf-8') as handle:
-    unqiue_file_handle = handle
-unique_data_writter = csv.writer(unqiue_file_handle)
+# # TODO: 需要改变
+# def get_date_file_name(original_filename: str) -> str:
+#     current_date = datetime.datetime.now().strftime("%Y_%m_%d")
+#     return f"{current_date}_{original_filename}"
+#
+#
+# # TODO: 这里需要严重review，对于test也不好写
+# unique_data_filename = get_date_file_name("unique_data.csv")
+# with open(f"{DATA_PATH}/{unique_data_filename}", "a", encoding='utf-8') as handle:
+#     unqiue_file_handle = handle
+# unique_data_writter = csv.writer(unqiue_file_handle)
 
 
 class ChromeExtensionDetails(BaseExtensionDetails):
