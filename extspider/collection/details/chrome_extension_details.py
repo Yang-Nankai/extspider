@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import csv
+import datetime
 import io
 import json
 import os
@@ -17,19 +19,13 @@ from extspider.collection.parsers.chrome_parser import ChromeExtensionDetailsMap
 from extspider.common.configuration import PROD_VERSION
 from extspider.storage.database_handle import DatabaseHandle
 from extspider.common.utils import request_retry_with_backoff
+from extspider.common.configuration import HTTP_HEADERS
+from extspider.common.configuration import CHROME_DETAIL_REQUEST_ID
+from extspider.common.context import DATA_PATH
 
 requests.packages.urllib3.disable_warnings()
 
 DETAILS_PATTERN = re.compile(r'(\[\[.*\]\])')
-HTTP_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        "AppleWebKit/537.36 (KHTML, like Gecko)"
-        "Chrome/118.0.5993.90"
-    ),
-    "Host": "chromewebstore.google.com",
-    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-}
 BASE_URL = "https://chromewebstore.google.com"
 BASE_REQUEST_URL = BASE_URL + "/_/ChromeWebStoreConsumerFeUi/data/batchexecute"
 
@@ -38,7 +34,34 @@ class BadCrx(IOError):
     pass
 
 
+# TODO: 需要改变
+def get_date_file_name(original_filename: str) -> str:
+    current_date = datetime.datetime.now().strftime("%Y_%m_%d")
+    return f"{current_date}_{original_filename}"
+
+
 class ChromeExtensionDetails(BaseExtensionDetails):
+
+    # TODO: 这里需要严重review，对于test也不好写
+    unique_data_filename = get_date_file_name("unique_data.csv")
+    unqiue_file_handle = open(f"{DATA_PATH}/{unique_data_filename}", "a", encoding='utf-8')
+    unique_data_writter = csv.writer(unqiue_file_handle)
+
+    def write_unique_data(self):
+        """
+        Write data to the CSV file.
+
+        Parameters:
+        - data: A tuple or list containing two values for the two columns in the file.
+        """
+        if self.identifier is None and self.version is None:
+            return
+        data = [self.identifier, self.version]
+        self.unique_data_writter.writerow(data)
+
+    def __del__(self):
+        if not self.unqiue_file_handle.closed:
+            self.unqiue_file_handle.close()
 
     @staticmethod
     def _response_to_details_list(response: str) -> List:
@@ -52,10 +75,8 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
     @property
     def request_body(self) -> Dict:
-        # TODO: Here need to be considered again
-        request_id = "xY2Ddd"
         return {
-            "f.req": f'[[["{request_id}","[\\"{self.identifier}\\"]",null,"1"]]]'
+            "f.req": f'[[["{CHROME_DETAIL_REQUEST_ID}","[\\"{self.identifier}\\"]",null,"1"]]]'
         }
 
     @property
@@ -91,7 +112,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
             content_stream = io.BytesIO(response.content)
             shutil.copyfileobj(content_stream, extension_file)
 
-        # TODO: load_manifest
+        # TODO: load_manifest，这里是不是不应该出现，代码是否复杂，需要review
         self.load_manifest(download_path)
         return os.path.exists(download_path)
 
@@ -100,6 +121,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         if response.status_code != 200:
             raise ExtensionRequestDetailError
         details_data = self._response_to_details_list(response.text)
+        print(json.dumps(details_data))
         processed_data = ChromeExtensionDetailsMapper.map_data_list(details_data)
         return processed_data
 
@@ -114,20 +136,6 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         self.update_from(process_data)
         new_hash = hash(self)
         return old_hash != new_hash
-
-    # TODO: 这里需不需要还是怎么更改位置
-    def save_metadata(self) -> None:
-        DatabaseHandle.store_extension(self.identifier,
-                                       self.name,
-                                       self.developer_name,
-                                       self.category,
-                                       self.user_count,
-                                       self.rating_count,
-                                       self.rating_average,
-                                       self.manifest,
-                                       self.byte_size,
-                                       self.version,
-                                       self.last_update)
 
     def load_manifest(self, crx_path: str) -> None:
         manifest_path = os.path.join(os.path.dirname(crx_path), "manifest.json")
@@ -190,3 +198,19 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         header_length = struct.unpack("<I", header_length_bytes)[0]
 
         crx_file.seek(header_length, os.SEEK_CUR)
+
+    # TODO: 这里需不需要还是怎么更改位置
+    def save_metadata(self) -> None:
+        DatabaseHandle.store_extension(self.identifier,
+                                       self.name,
+                                       self.developer_name,
+                                       self.category,
+                                       self.user_count,
+                                       self.rating_count,
+                                       self.rating_average,
+                                       self.manifest,
+                                       self.byte_size,
+                                       self.version,
+                                       self.last_update)
+        # TODO: 存储permission
+        DatabaseHandle.store_extension_permission(self)

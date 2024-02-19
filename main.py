@@ -1,13 +1,26 @@
 # -*- coding: utf-8 -*-
+import os
+from datetime import datetime
+
 from tests.collection.category.test_chrome_category_scraper import TestChromeCategoryScraper
 from extspider.storage.archive_handle import ArchiveHandle
+from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
+from extspider.collection.category.chrome_category_scraper import ChromeCategoryScraper
+from extspider.collection.run import run
+from extspider.common.context import DATA_PATH
+
+
+def rename_extension_ids_file():
+    current_date = datetime.datetime.now().strftime("%Y_%m_%d")
+    original_filename = f"{DATA_PATH}/extension_ids.txt"
+    new_filename = f"{DATA_PATH}/{current_date}_{original_filename}"
+    os.rename(original_filename, new_filename)
+
 
 if __name__ == '__main__':
-    # TestChromeCategoryScraper.test_big_run()
-    identifier = "a" * 32
-    version_name = "1.0.1"
-    download_path = ArchiveHandle.get_extension_storage_path(
-        (identifier +
-         f".{version_name}.crx")
-    )
-    print(download_path)
+    # 1. 首先快速爬取所有的extension_id, 生成extension_ids.txt文件
+    ChromeCategoryScraper.quick_scan()
+    # 2. 然后获取所有extension的细节，并下载crx文件，同时在数据库中存放信息
+    run()
+    # 3. 然后将extension_ids.txt存档，改为 日期_extension_ids.txt
+    rename_extension_ids_file()

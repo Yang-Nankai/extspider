@@ -6,6 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import String, Date, Numeric, ForeignKey, JSON, BigInteger, Integer, case, null, PrimaryKeyConstraint
 
 from extspider.storage.models.common import BaseModel
+from extspider.common.utils import is_valid_extension_id
 
 
 class ExtensionPermission(BaseModel):
@@ -16,7 +17,7 @@ class ExtensionPermission(BaseModel):
 
     extension_id: Mapped[str] = mapped_column()
     extension_version: Mapped[str] = mapped_column()
-    manifest_version: Mapped[int]
+    manifest_version: Mapped[Optional[int]]
     permissions: Mapped[Optional[List]] = mapped_column(JSON)
     optional_permissions: Mapped[Optional[List]] = mapped_column(JSON)
     content_scripts_matches: Mapped[Optional[List]] = mapped_column(JSON)
@@ -27,6 +28,7 @@ class ExtensionPermission(BaseModel):
     __table_args__ = (
         PrimaryKeyConstraint('extension_id', 'extension_version'),
     )
+
     # extension: Mapped["Extension"] = relationship(back_populates="permission")
 
     def __init__(self, extension_id: Optional[str] = None,
@@ -48,3 +50,14 @@ class ExtensionPermission(BaseModel):
                 + f"{mainfest_version}; Expected a number 2 or 3."
             )
         return int(mainfest_version)
+
+    @validates("extension_id")
+    def validate_extension_id(self, _, id: str) -> str:
+        # key and id are expected to be the same value
+        is_valid = is_valid_extension_id(id)
+
+        if not is_valid:
+            raise ValueError(f"The provided extension identifier '{id} is invalid'."
+                             f"Only [a-p]*32 are allowed.")
+
+        return id

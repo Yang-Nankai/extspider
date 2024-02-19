@@ -2,7 +2,7 @@
 import unittest
 import os
 from tempfile import TemporaryDirectory
-from extspider.collection.progress_saver import ChromeProgressSaver
+from extspider.collection.progress_saver import ChromeProgressSaver, ProgressStatus
 
 
 class TestChromeProgressSaver(unittest.TestCase):
@@ -16,15 +16,14 @@ class TestChromeProgressSaver(unittest.TestCase):
 
     def test_save_and_load_progress(self):
         # Test Uncompleted
-        status = 0
         scraped_categories = ["category1", "category2"]
-        now_category = "current_category"
+        now_category = "test_category"
         token = "test_token"
-        break_reason = "testing_break"
+        break_reason = "test_reason"
 
         # Save progress
         self.progress_saver.save_progress(
-            status=status,
+            status=ProgressStatus.UNCOMPLETED.value,
             scraped_categories=scraped_categories,
             now_category=now_category,
             token=token,
@@ -32,34 +31,42 @@ class TestChromeProgressSaver(unittest.TestCase):
         )
 
         # Load progress
-        loaded_progress = self.progress_saver.load_progress()
+        loaded_progress = self.progress_saver.progress_info
 
         # Assert statements
         self.assertIsNotNone(loaded_progress)
-        self.assertEqual(loaded_progress.get("status"), status)
+        self.assertEqual(loaded_progress.get("status"), 0)
         self.assertEqual(loaded_progress.get("scraped_categories"), scraped_categories)
         self.assertEqual(loaded_progress.get("now_category"), now_category)
         self.assertEqual(loaded_progress.get("token"), token)
         self.assertEqual(loaded_progress.get("break_reason"), break_reason)
 
-        # Test Completed
-        status = 1
+        # Test is_finished
+        is_finished = self.progress_saver.is_finished
+        self.assertFalse(is_finished)
 
-        # Save progress
-        self.progress_saver.save_progress(status=status)
+        # Save completed progress
+        self.progress_saver.save_progress(status=ProgressStatus.COMPLETED.value)
 
         # Load progress
-        loaded_progress = self.progress_saver.load_progress()
+        loaded_progress = self.progress_saver.progress_info
         # Assert statements
         self.assertIsNotNone(loaded_progress)
-        self.assertEqual(loaded_progress.get("status"), status)
+        self.assertEqual(loaded_progress.get("status"), 1)
         self.assertIsInstance(loaded_progress.get("scraped_categories"), list)
+
+        # Test is_finished
+        is_finished = self.progress_saver.is_finished
+        self.assertTrue(is_finished)
 
     def test_load_nonexistent_progress(self):
         # Attempt to load progress from a non-existent file
         self.bad_progress_saver = ChromeProgressSaver(filename="test_progress.json")
-        loaded_progress = self.bad_progress_saver.load_progress()
+        loaded_progress = self.bad_progress_saver.progress_info
 
         # Assert statement
         self.assertIsNone(loaded_progress)
 
+        # Test is_finished
+        is_finished = self.progress_saver.is_finished
+        self.assertTrue(is_finished)

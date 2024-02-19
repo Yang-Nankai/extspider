@@ -14,6 +14,9 @@ scraper_parameters:
   prod_version: 121.0.6167.161
   # URL to the Chrome Web Store
   store_url: https://chrome.google.com/webstore/category/extensions
-
+  # Chrome request category id
+  chrome_category_request_id: zTyKYc
+  # Chrome detail request id
+  chrome_detail_request_id: xY2Ddd
 
 # TODO: storage_path 没有 archive_handle中

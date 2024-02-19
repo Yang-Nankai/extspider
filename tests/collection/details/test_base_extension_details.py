@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import os.path
 from .base_tests import BaseTests as BT
 from extspider.collection.details.base_extension_details import BaseExtensionDetails
+from extspider.common.context import DATA_PATH
 from dataclasses import astuple
+
+DOWNLOAD_PATH = os.path.join(DATA_PATH, "a"*32)
 
 
 class TestBaseExtensionDetails(BT.DetailsTestCase):
@@ -26,8 +30,14 @@ class TestBaseExtensionDetails(BT.DetailsTestCase):
         original.copy_from(change)
         self.assertEqual(original.version, change.version)
 
-    def test_update_details(self):
-        pass
-
     def test_download(self):
-        pass
+        with self.assertRaises(NotImplementedError):
+            original = self.get_test_details()
+            original.download(DOWNLOAD_PATH)
+
+    def test_update_details(self):
+        with self.assertRaises(NotImplementedError):
+            original = self.get_test_details()
+            original.update_details()
+
+

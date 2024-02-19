@@ -12,7 +12,7 @@ from extspider.storage.archive_handle import ArchiveHandle
 from extspider.storage.crx_archive import CrxArchive
 from extspider.collection.details.base_extension_details import BaseExtensionDetails
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
-from extspider.common.log import get_logger
+from extspider.common.log import get_logger, FeishuMessenger
 from extspider.common.context import DATA_PATH
 
 # TODO: 不是长久之计
@@ -155,6 +155,8 @@ class CollectorWorker(Worker):
         self.log(f"Collecting {extension.identifier}...", logging.DEBUG)
         try:
             extension.update_details()
+            # TODO: 这里需要review，将id+version作为唯一标识写入
+            extension.write_unique_data()
 
         except Exception as error:
             self.log(
@@ -269,10 +271,10 @@ class DatabaseWorker(Worker):
 
     save_queue = CollectorWorker.finished_queue
     saved_extensions_count = Counter()
-    saved_archives_count = Counter()
+    # saved_archives_count = Counter()
 
     failed_extensions_queue: Queue[BaseExtensionDetails] = Queue()
-    failed_archives_queue: Queue[CrxArchive] = Queue()
+    # failed_archives_queue: Queue[CrxArchive] = Queue()
 
     finished_event = Event()
 
@@ -286,10 +288,6 @@ class DatabaseWorker(Worker):
                                 extension: BaseExtensionDetails) -> None:
         self.failed_extensions_queue.put((error, extension))
 
-    def enqueue_archive_error(self,
-                              error: Exception,
-                              archive: CrxArchive) -> None:
-        self.failed_archives_queue.put((error, archive))
 
     def save_extension(self, extension: BaseExtensionDetails) -> bool:
         try:
@@ -306,21 +304,6 @@ class DatabaseWorker(Worker):
         self.log(f"Saved {extension.identifier} successfully", logging.DEBUG)
         return True
 
-    def save_archive(self, archive: CrxArchive) -> bool:
-        try:
-            archive.save_metadata()
-
-        except Exception as error:
-            self.log(f"Encountered {type(error).__name__} upon saving "
-                     f"archive: {repr(archive)}", logging.ERROR)
-            self.enqueue_archive_error(error, archive)
-            traceback.print_exc()
-            return False
-
-        self.log(f"Saved archive for {archive.extension_id} successfully",
-                 logging.DEBUG)
-        return True
-
     def work(self,
              metadata: Union[BaseExtensionDetails, CrxArchive]) -> None:
 
@@ -328,10 +311,6 @@ class DatabaseWorker(Worker):
         if isinstance(metadata, BaseExtensionDetails):
             if self.save_extension(metadata):
                 self.saved_extensions_count.increment()
-
-        elif type(metadata) == CrxArchive:
-            if self.save_archive(metadata):
-                self.saved_archives_count.increment()
 
     def run(self) -> None:
         self.log("Ready", logging.INFO)
@@ -359,7 +338,7 @@ class ProgressTrackerWorker(Worker):
     collected_details_count = CollectorWorker.collected_details_count
     downloaded_count = CollectorWorker.downloaded_count
     saved_extensions_count = DatabaseWorker.saved_extensions_count
-    saved_archives_count = DatabaseWorker.saved_archives_count
+    # saved_archives_count = DatabaseWorker.saved_archives_count
 
     collection_backlog = CollectorWorker.collect_queue
     database_backlog = DatabaseWorker.save_queue
@@ -368,20 +347,21 @@ class ProgressTrackerWorker(Worker):
     failed_extension_downloads = CollectorWorker.failed_downloads_queue
     failed_archive_extractions = CollectorWorker.failed_storage_queue
     failed_extension_saves = DatabaseWorker.failed_extensions_queue
-    failed_archive_saves = DatabaseWorker.failed_archives_queue
+    # failed_archive_saves = DatabaseWorker.failed_archives_queue
 
     finished_event = Event()
 
-    def __init__(self, update_seconds: int = 10) -> None:
+    def __init__(self, update_seconds: int = 10, enable_feishu: bool = False) -> None:
         super().__init__()
         self.update_seconds = update_seconds
         # self.is_telegram_enabled = enable_telegram
+        self.is_feishu_enabled = enable_feishu
 
         # TODO: 消息模块
-        # if self.is_telegram_enabled:
-        #     self.messenger = TelegramMessenger()
-        # else:
-        #     self.messenger = None
+        if self.is_feishu_enabled:
+            self.messenger = FeishuMessenger()
+        else:
+            self.messenger = None
 
         self.start_time = None
 
@@ -420,7 +400,6 @@ class ProgressTrackerWorker(Worker):
             f"Scraped extension details: {self.collected_details_count}\n"
             f"Saved extension metadata: {self.saved_extensions_count}\n"
             f"Downloaded crx files: {self.downloaded_count}\n"
-            f"Saved crx files' metadata: {self.saved_archives_count}\n"
             "-- Backlog --\n"
             f"Backlog limit: {BACKLOG_LIMIT}\n"
             f"Collection backlog: {self.collection_backlog.qsize()}\n"
@@ -429,8 +408,6 @@ class ProgressTrackerWorker(Worker):
             f"Details collection: {self.failed_details_collections.qsize()}\n"
             f"Extension download: {self.failed_extension_downloads.qsize()}\n"
             f"Extension metadata save: {self.failed_extension_saves.qsize()}\n"
-            f"Archive extraction: {self.failed_archive_extractions.qsize()}\n"
-            f"Archive metadata save: {self.failed_archive_saves.qsize()}\n"
             f"-- Runtime metrics --\n"
             f"Elapsed time: {self.elapsed_time_printable}\n"
             f"Average scrape-to-save time: {self.archives_per_second} seconds"
@@ -442,8 +419,8 @@ class ProgressTrackerWorker(Worker):
         status = self.overall_status
         print(status)
 
-        # if self.is_telegram_enabled:
-        #     self.messenger.update_message(status)
+        if self.is_feishu_enabled:
+            self.messenger.update_message(status)
 
     def work(self) -> None:
         if DatabaseWorker.finished_event.is_set():

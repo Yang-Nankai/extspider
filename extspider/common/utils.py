@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import random
 import re
+import string
+
 import requests
 import time
 
@@ -36,3 +39,8 @@ def request_retry_with_backoff(max_retries=3, retry_interval=1):
         return _request_retry_with_backoff
 
     return decorator
+
+
+def get_random_extension_id() -> str:
+    encoded_digits = string.ascii_lowercase[:16]
+    return "".join(random.choice(encoded_digits) for _ in range(32))

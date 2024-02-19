@@ -57,7 +57,7 @@ class ChromeExtensionDetailsMapper(DataMapper):
     def DATA_TRANSFORMERS(self) -> dict[str, Callable]:
         return {
             "manifest": self.parse_manifest,
-            "byte_size": self.printable_bytes_to_float,
+            "byte_size": self.printable_bytes_to_int,
             "last_update": self.timestamp_to_date,
             "recommended_extensions": PartialDetailsMapper.map_extension_items
         }
@@ -73,14 +73,14 @@ class ChromeExtensionDetailsMapper(DataMapper):
         return converted_date
 
     @staticmethod
-    def printable_bytes_to_float(printable_size) -> float:
+    def printable_bytes_to_int(printable_size) -> int:
         unit_conversion = {
             "KiB": 1024,
             "MiB": 1024 ** 2,
             "GiB": 1024 ** 3
         }
         number, unit = printable_size[:-3], printable_size[-3:]
-        return float(number) * unit_conversion[unit]
+        return int(float(number) * unit_conversion[unit])
 
     @staticmethod
     def parse_manifest(json_string: str) -> str:

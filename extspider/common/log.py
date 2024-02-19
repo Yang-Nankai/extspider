@@ -1,15 +1,142 @@
+import functools
+import json
 import os
 import sys
 import traceback
 import inspect
 import logging
+import requests
 import html
+import unittest
+from socket import socket
 from typing import Callable
 from extspider.common.configuration import LOG_PATH
 
 # Use project root as destination folder for log file
 LOG_FILE_NAME = "runtime.log"
 LOG_FILE_PATH = os.path.join(LOG_PATH, LOG_FILE_NAME)
+
+
+# TODO: 这里可以用到donwload的下载逻辑中
+def cleanup_file(file_path):
+    """Decorator to clean up a file after executing a unit test."""
+
+    def decorator(test_func):
+        @functools.wraps(test_func)
+        def wrapper(*args, **kwargs):
+            try:
+                # Run the test method
+                test_func(*args, **kwargs)
+            finally:
+                # Clean up the file
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+        return wrapper
+
+    return decorator
+
+
+def use_test_samples(test_samples: list):
+    """
+    Decorator to run a unit test on a list of samples.
+    Indicates the failing sample if an exception is raised.
+
+    Args:
+        test_samples (list[Any]): The sample arguments for the test method.
+    """
+
+    def decorator(test_func):
+        @functools.wraps(test_func)
+        def wrapper(self):
+            for index, sample in enumerate(test_samples):
+                try:
+                    test_func(self, sample)
+                except Exception as e:
+                    truncated = (
+                        str(sample)[:40] + '...'
+                        if len(str(sample)) > 40 else str(sample))
+                    raise type(e)(
+                        f"Test failed for sample at index {index}: {truncated}"
+                    ) from e
+
+        return wrapper
+
+    return decorator
+
+
+# region CONNECTIVITY TEST
+# Global variable to cache the internet connectivity test result
+_is_internet_connected = None
+
+
+def is_internet_connected(host="8.8.8.8", port=53, timeout=3) -> bool:
+    """
+    Checks if the host machine has Internet connectivity.
+    Caches the result to avoid redundant checks.
+
+    Args:
+        host (str, optional): Defaults to "8.8.8.8".
+        port (int, optional): Defaults to 53.
+        timeout (int, optional): Amount of seconds before timing out.
+            Defaults to 3.
+
+    Returns:
+        bool: True if the host machine is connected; False otherwise.
+    """
+    global _is_internet_connected
+    if _is_internet_connected is None:
+        try:
+            socket.setdefaulttimeout(timeout)
+            socket.socket(
+                socket.AF_INET, socket.SOCK_STREAM
+            ).connect((host, port))
+            _is_internet_connected = True
+        except socket.error:
+            _is_internet_connected = False
+    return _is_internet_connected
+
+
+def skip_unless_internet_connected(func):
+    """
+    Decorator to skip a test method if there is no Internet connectivity.
+    """
+
+    @functools.wraps(func)
+    @unittest.skipUnless(is_internet_connected(),
+                         "Internet connection is required for this test")
+    def wrapper(*args, **kwargs):
+        func(*args, **kwargs)
+
+    return wrapper
+
+
+# endregion
+
+
+class FeishuMessenger:
+    # TODO: 在配置中设置
+    WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/a3c4f648-a30a-4dc2-b724-d705c8d2be81"
+    HEADERS = {"Content-Type": "application/json"}
+
+    def send_message(self, message_content: str) -> bool:
+        # TODO: 配置中还要设置
+        # if not IS_TELEGRAM_ENABLED:
+        payload = {
+            "msg_type": "text",
+            "content": {
+                "text": message_content
+            }
+        }
+
+        response = requests.post(self.WEBHOOK_URL,
+                                 headers=self.HEADERS,
+                                 data=json.dumps(payload))
+        if response.status_code != 200:
+            print("Feishu Response Status Code: ", response.status_code)
+            return False
+
+        return True
 
 
 def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:

@@ -9,6 +9,7 @@ from sqlalchemy.sql.functions import current_date
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import String, Date, Numeric, ForeignKey, JSON, BigInteger, Integer, case, null
 
+from extspider.common.utils import is_valid_extension_id
 from extspider.storage.models.common import BaseModel
 
 
@@ -51,15 +52,12 @@ class Extension(BaseModel):
         Numeric(precision=5, scale=2)
     )
     manifest: Mapped[Optional[Dict]] = mapped_column(JSON)
-    # TODO: byte_size 这里的类型是int还是float?
     byte_size: Mapped[Optional[int]] = mapped_column(BigInteger)
     latest_version: Mapped[Optional[str]]
     updated_at: Mapped[Optional[date]]
     download_date: Mapped[Date] = mapped_column(Date(),
                                                 server_default=current_date(),
                                                 onupdate=current_date())
-    # permissions: Mapped[List["ExtensionPermission"]] = relationship(back_populates="extension")
-    # permission: Mapped["ExtensionPermission"] = relationship(uselist=False, back_populates='extension')
     category: Mapped["ExtensionCategory"] = relationship(
         back_populates="extensions"
     )
@@ -89,17 +87,11 @@ class Extension(BaseModel):
     @validates("id")
     def validate_id(self, _, id: str) -> str:
         # key and id are expected to be the same value
-        if len(id) != 32:
-            raise ValueError(f"An extension identifier of length {len(id)} " \
-                             + "was provided; Expected 32 characters.")
+        is_valid = is_valid_extension_id(id)
 
-        found_invalid_characters = self.get_invalid_characters_from_id(id)
-        if len(found_invalid_characters) > 0:
-            raise ValueError(
-                f"The provided extension identifier '{id}' contains invalid " \
-                + f"characters: {found_invalid_characters}; Only characters " \
-                + "[a-p] are allowed."
-            )
+        if not is_valid:
+            raise ValueError(f"The provided extension identifier '{id} is invalid'."
+                             f"Only [a-p]*32 are allowed.")
 
         return id
 
@@ -143,6 +135,9 @@ class Extension(BaseModel):
 
     @validates("byte_size")
     def validate_byte_size(self, _, byte_size: int) -> int:
+        if byte_size is None:
+            return
+
         if byte_size <= 0:
             raise ValueError(
                 "The byte size of the crx archive cannot be " \
@@ -212,7 +207,6 @@ class Extension(BaseModel):
         return cls.manifest.op("->>")("optional_host_permissions").cast(list)
 
     @hybrid_property
-    # TODO: version_name or version, 有点是version_name有的是version，因此都需要
     def version_name(self) -> Optional[str]:
         if self.manifest is None:
             return None

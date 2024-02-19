@@ -1,14 +1,31 @@
+import json
 from typing import List
 from decimal import Decimal
 import random
 from hashlib import md5
+import os
 from datetime import date
 from unittest import TestCase
 
+from extspider.common.context import TEST_SAMPLES_PATH
 from extspider.storage.models.common import (BaseModelTestCase,
-                                             get_random_extension_id,
                                              TEST_RECORDS_AMOUNT)
+from extspider.common.utils import get_random_extension_id
 from extspider.storage.models.extension import Extension, ExtensionCategory
+
+# region TEST SAMPLES INITIALISATION
+SAMPLES_ROOT = os.path.join(TEST_SAMPLES_PATH, "database_handle")
+
+
+def read_sample(file_name):
+    file_path = os.path.join(SAMPLES_ROOT, file_name)
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return file.read()
+
+
+def read_json_sample(file_name):
+    content_string = read_sample(file_name)
+    return json.loads(content_string)
 
 
 class TestExtension(BaseModelTestCase, TestCase):
@@ -35,6 +52,13 @@ class TestExtension(BaseModelTestCase, TestCase):
                 rating_count=invalid_rating_count
             ))
 
+    def assertInvalidByteSize(self, invalid_byte_size: int) -> None:
+        with self.assertRaises(ValueError):
+            self.session.add(Extension(
+                id=get_random_extension_id(),
+                byte_size=invalid_byte_size
+            ))
+
     def assertInvalidRatingAverage(
             self, invalid_rating_average: Decimal) -> Decimal:
         with self.assertRaises(ValueError):
@@ -58,12 +82,17 @@ class TestExtension(BaseModelTestCase, TestCase):
                 random_id = get_random_extension_id()
                 test_extension = Extension(
                     id=random_id,
+                    name="test_name",
+                    developer_name="test_developer",
                     category_id=test_category.id,
                     download_count=random.randint(0, 100000),
                     rating_count=random.randint(0, 10000),
                     rating_average=random.random() * 5,
+                    manifest=read_json_sample("test_manifest.json"),
+                    byte_size=random.randint(0, 100000),
                     latest_version="0.1.2.34",
-                    updated_at=date.today()
+                    updated_at=date.today(),
+                    download_date=date.today()
                 )
                 self.session.add(test_extension)
                 expected.append(test_extension)
@@ -108,6 +137,37 @@ class TestExtension(BaseModelTestCase, TestCase):
         self.session.commit()
         self.assertNoResults()
 
+    # TODO: 测试是否是benchmark，更新会不会导致问题
+    def test_insertion_update(self):
+        # Same extension id, and update the version
+        original_id = get_random_extension_id()
+        original_version = "1.0.1"
+        original_extension = Extension(
+            extension_id=original_id,
+            latest_version=original_version
+        )
+        self.session.merge(original_extension)
+        self.session.commit()
+
+        inserted_extension = self.session.query(Extension).first()
+        self.assertEqual(inserted_extension.id, original_id)
+        self.assertEqual(inserted_extension.latest_version, original_version)
+
+        update_version = "1.0.2"
+        update_extension = Extension(
+            extension_id=original_id,
+            latest_version=update_version
+        )
+        self.session.merge(update_extension)
+        self.session.commit()
+
+        updated_extension = self.session.query(Extension).first()
+        self.assertEqual(updated_extension.id, original_id)
+        self.assertEqual(inserted_extension.latest_version,
+                         updated_extension.latest_version)
+        all_results = self.session.query(Extension).all()
+        self.assertEqual(len(all_results), 1)
+
     def test_parameter_validation(self):
         # Test invalid IDs
         too_short_id = "abcde"
@@ -126,6 +186,8 @@ class TestExtension(BaseModelTestCase, TestCase):
         # Test invalid rating percentages
         self.assertInvalidRatingAverage(-2.45)
         self.assertInvalidRatingAverage(5.01)
+
+        self.assertInvalidByteSize(-10)
 
         self.session.commit()
         self.assertNoResults()

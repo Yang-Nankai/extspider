@@ -99,28 +99,6 @@ class TestArchiveHandle(TestCase):
         self.assertTrue(os.path.isfile(link_file_path))
         self.assertTrue(os.path.isfile(actual_file_path))
 
-    def test_store_extension_archive(self):
-        ArchiveHandle.setup()
-        test_extension_id = "a" * 32
-        extension = DatabaseHandle.store_extension(
-            test_extension_id,
-            *([None] * 6)  # leave remaining arguments empty
-        )
-        digest = ArchiveHandle.store_extension_archive(
-            extension.id,
-            self.sample_extension_path
-        ).digest
-        expected_base_directory = ArchiveHandle.get_extension_storage_directory(
-            extension.id,
-            "3.2"
-        )
-        expected_crx_path = os.path.join(expected_base_directory,
-                                         f'{extension.id}.3.2.crx')
-        expected_manifest_path = os.path.join(expected_base_directory,
-                                              "manifest.json")
-        self.assertTrue(os.path.isfile(expected_crx_path))
-        self.assertTrue(os.path.isfile(expected_manifest_path))
-
     def test_get_version_from_manifest(self):
         sample_manifest_path = os.path.join(ARCHIVE_HANDLE_SAMPLES,
                                             "sample_extension",

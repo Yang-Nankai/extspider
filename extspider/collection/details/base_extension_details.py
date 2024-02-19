@@ -21,8 +21,7 @@ class BaseExtensionDetails:
     rating_count: Optional[int] = None
     user_count: Optional[int] = None
     manifest: Optional[dict] = None
-    # TODO: Need review, byte_size is `float` or `int`.
-    byte_size: Optional[float] = None
+    byte_size: Optional[int] = None
     developer_name: Optional[str] = None
     recommended_extensions: Optional[list] = None
 
@@ -89,3 +88,12 @@ class BaseExtensionDetails:
     def download(self, download_path: str) -> None:
         """Download an extension CRX archive in the given path"""
         raise NotImplementedError
+
+    def update_details(self) -> bool:
+        """Scrapes the extension's online details
+
+        Returns:
+            True if the details were updated, false otherwise.
+        """
+        raise NotImplementedError
+

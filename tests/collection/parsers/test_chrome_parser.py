@@ -3,9 +3,11 @@ import json
 import os
 from unittest import TestCase
 from dataclasses import fields
+from datetime import date, datetime
 from extspider.common.context import TEST_SAMPLES_PATH
 from extspider.collection.parsers.chrome_parser import ChromeExtensionDetailsMapper, ChromeCategoryResponseMapper
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
+from extspider.common.exception import UnexpectedDataStructure
 
 # region TEST SAMPLES INITIALISATION
 SAMPLES_ROOT = os.path.join(TEST_SAMPLES_PATH, "chrome_parser")
@@ -23,19 +25,25 @@ def read_json_sample(file_name):
 
 
 # JSON raw data samples
-INDEX_DATA = read_json_sample("index-data.json")
-GENERAL_DATA = read_json_sample("category-extensions-data.json")
 CATEGORY_DATA = read_json_sample("lifestyle-art-data.json")
 DETAILS_DATA = read_json_sample("google-translate-data.json")
-DATA_SAMPLES = [INDEX_DATA, GENERAL_DATA, CATEGORY_DATA, DETAILS_DATA]
+BAD_DETAILS_DATA = read_json_sample("bad-extension-data.json")
+DATA_SAMPLES = [CATEGORY_DATA, DETAILS_DATA]
 
 # JSON parsed data samples
-INDEX_PARSED = None  # TODO
-GENERAL_PARSED = None  # TODO
 CATEGORY_PARSED = read_json_sample("lifestyle-art-parsed.json")
 DETAILS_PARSED = read_json_sample("google-translate-parsed.json")
-PARSED_SAMPLES = [INDEX_PARSED, GENERAL_PARSED, CATEGORY_PARSED, DETAILS_PARSED]
+PARSED_SAMPLES = [CATEGORY_PARSED, DETAILS_PARSED]
 
+
+class ComplexEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.strftime('%Y-%m-%d %H:%M:%S')
+        elif isinstance(obj, date):
+            return obj.strftime('%Y-%m-%d')
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 class TestChromeCategoryResponseMapper(TestCase):
     def test_map_data_list(self):
@@ -59,5 +67,10 @@ class TestChromeExtensionDetailsMapper(TestCase):
 
     def test_map_data_list(self):
         parsed_data = ChromeExtensionDetailsMapper.map_data_list(DETAILS_DATA)
-        self.assertEqual(parsed_data, DETAILS_PARSED)
+        parsed_json = json.loads(json.dumps(parsed_data, cls=ComplexEncoder))
+        self.assertEqual(parsed_json, DETAILS_PARSED)
+
+    def test_invaild_data_list(self):
+        with self.assertRaises(UnexpectedDataStructure):
+            parsed_data = ChromeExtensionDetailsMapper.map_data_list(BAD_DETAILS_DATA)
 

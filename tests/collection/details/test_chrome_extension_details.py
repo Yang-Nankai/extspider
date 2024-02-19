@@ -1,28 +1,25 @@
 # -*- coding: utf-8 -*-
-import json
 import os
-from unittest import TestCase
+from dataclasses import astuple
+
+from .base_tests import BaseTests as BT
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
 from extspider.common.context import TEST_SAMPLES_PATH
+from extspider.common.configuration import HTTP_HEADERS
 
 SAMPLES_ROOT = os.path.join(TEST_SAMPLES_PATH, "chrome_extension_details")
 TEST_DOWNLOAD_PATH = os.path.join(SAMPLES_ROOT, "test_download.crx")
-
-HTTP_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        "AppleWebKit/537.36 (KHTML, like Gecko)"
-        "Chrome/118.0.5993.90"
-    ),
-    "Host": "chromewebstore.google.com",
-    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-}
+TEST_MANIFEST_PATH = os.path.join(SAMPLES_ROOT, "manifest.json")
 
 
-class TestChromeExtensionDetails(TestCase):
+class TestChromeExtensionDetails(BT.DetailsTestCase):
+
+    @property
+    def details_class(self):
+        return ChromeExtensionDetails
 
     def setUp(self) -> None:
-        self.extension = ChromeExtensionDetails("knkpjhkhlfebmefnommmehegjgglnkdm")
+        self.extension = ChromeExtensionDetails("pgbdljpkijehgoacbjpolaomhkoffhnl")
 
     def test_get_extension_detail(self):
         processed_data = self.extension.get_extension_detail()
@@ -37,11 +34,37 @@ class TestChromeExtensionDetails(TestCase):
 
     def test_download(self):
         self.extension.download(TEST_DOWNLOAD_PATH)
-        file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
-        self.assertTrue(file_exists)
+        crx_file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
+        self.assertTrue(crx_file_exists)
+        manifest_file_exists = os.path.exists(TEST_MANIFEST_PATH)
+        self.assertTrue(manifest_file_exists)
+
+    def test_update_from(self):
+        identifier = "a" * 32
+
+        original = self.details_class(identifier, "test", version="1.0.0")
+        change = astuple(self.details_class(identifier, "test", version="1.0.1"))
+        original.update_from(change)
+        self.assertEqual(original.version, "1.0.1")
+
+    def test_copy_from(self):
+        identifier = "a" * 32
+
+        original = self.details_class(identifier, "test", version="1.0.0")
+        change = self.details_class(identifier, "test", version="1.0.1")
+        original.copy_from(change)
+        self.assertEqual(original.version, change.version)
+
+    # def test_write_unique_data(self):
+    #     identifier = "a" * 32
+    #     original = self.details_class(identifier, "test", version="1.0.0")
+    #     original.write_unique_data()
 
     def tearDown(self) -> None:
-        file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
-        if file_exists:
+        crx_file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
+        if crx_file_exists:
             os.unlink(TEST_DOWNLOAD_PATH)
+        manifest_file_exists = os.path.exists(TEST_MANIFEST_PATH)
+        if manifest_file_exists:
+            os.unlink(TEST_MANIFEST_PATH)
 

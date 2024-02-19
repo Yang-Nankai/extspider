@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import csv
 import json
 import re
 import requests
@@ -10,23 +9,17 @@ from extspider.common.exception import CategoryCollectionError, CategoryRequestE
 from extspider.collection.parsers.chrome_parser import ChromeCategoryResponseMapper
 from extspider.collection.progress_saver import ChromeProgressSaver
 from extspider.common.utils import request_retry_with_backoff
-from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
+from extspider.common.configuration import CHROME_CATEGORY_REQUEST_ID
 from typing import Dict, List
+from extspider.collection.progress_saver import ProgressStatus
+from extspider.common.configuration import HTTP_HEADERS
 
 requests.packages.urllib3.disable_warnings()
 
 CATEGORY_NAMES_PATTERN = re.compile(r',\\\"([a-z_]+/[a-z_]+)\\\"')
 DETAILS_PATTERN = re.compile(r'(\[\[.*\]\])')
 
-HTTP_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        "AppleWebKit/537.36 (KHTML, like Gecko)"
-        "Chrome/118.0.5993.90"
-    ),
-    "Host": "chromewebstore.google.com",
-    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-}
+
 BASE_URL = "https://chromewebstore.google.com"
 BASE_SOURCE_PATH = "category/extensions/{category}"
 BASE_REQUEST_URL = BASE_URL + "/_/ChromeWebStoreConsumerFeUi/data/batchexecute"
@@ -38,17 +31,17 @@ class ChromeCategoryScraper(BaseCategoryScraper):
     found_ids = set()
     scraped_categories = list()
 
+    # TODO: 这里针对token这里有点不好看需要改正
     def __init__(self, category_name: str, token: str = "") -> None:
         self.category_name = category_name
         self.source_path = BASE_SOURCE_PATH.format(category=category_name)
         self.once_num = 64  # Num of once request extensions
         self.token = token
-        # TODO: Get request_id from html page automatically
-        self.request_id = "zTyKYc"
+        self.request_id = CHROME_CATEGORY_REQUEST_ID
         self.target_url = f"{BASE_REQUEST_URL}?rpcids={self.request_id}&source-path={self.source_path}"
-        # self.backup_writter = csv.writer(
-        #     open(f"{DATA_PATH}/categories_results.csv", "a", newline='', encoding='utf-8')
-        # )
+        # TODO: 不需要考虑文件名，因为这里只用作快速爬取的操作，而对比需要id+version，因此要在其他模块单独存储当日的数据方便对比(JSON/CSV)
+        # TODO: 但是这里是追加模式，因此需要考虑一个新的方式，例如在开头加上当前时间，对于后面爬取的也这么做
+        # TODO: 考虑将这个做为一个配置使用
         self.ids_writter = open(f"{DATA_PATH}/extension_ids.txt", "a", encoding='utf-8')
 
     @property
@@ -63,6 +56,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         return self.token
 
     def start(self):
+        # TODO: 改为Logger记录
         print(f'Starting collect category: {self.category_name} ...')
         index = 0
 
@@ -70,7 +64,6 @@ class ChromeCategoryScraper(BaseCategoryScraper):
             index += 1
             print(f"Cycle: {index}")
 
-            # TODO: need change the name
             details_data = self.request_details()
             if not all([self.token, details_data, len(details_data) > 0]):
                 break
@@ -89,10 +82,13 @@ class ChromeCategoryScraper(BaseCategoryScraper):
 
     @request_retry_with_backoff(max_retries=5, retry_interval=2)
     def request_details(self) -> list[str]:
-        response = requests.post(self.target_url, headers=HTTP_HEADERS, data=self.request_body)
+        # TODO: 函数过长，逻辑过于混乱，需要清理(将request的内容单独领出来，取个好名字)
+        response = requests.post(url=self.target_url,
+                                 headers=HTTP_HEADERS,
+                                 data=self.request_body)
         if response.status_code != 200:
             raise CategoryRequestError
-        details_data = self._response_to_details_list(response.text)
+        details_data = self._response_text_to_details_list(response.text)
         processed_data = ChromeCategoryResponseMapper.map_data_list(details_data)
         # Replace '=' with Unicode '\u003d' for proper encoding
         self.token = processed_data[1]
@@ -107,8 +103,8 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         return cls._get_category_names_from_html(html)
 
     @staticmethod
-    def _response_to_details_list(response: str) -> List:
-        details_match = re.findall(DETAILS_PATTERN, response)
+    def _response_text_to_details_list(response_text: str) -> List:
+        details_match = re.findall(DETAILS_PATTERN, response_text)
 
         if details_match:
             details = json.loads(json.loads(details_match[0])[0][2])
@@ -123,51 +119,53 @@ class ChromeCategoryScraper(BaseCategoryScraper):
 
     @classmethod
     def quick_scan(cls) -> None:
-        # TODO: 删除Progress功能，感觉没什么用
-        progress_info = ChromeProgressSaver()
-        progress = progress_info.load_progress()
+        # TODO: 这里加上就不删除了，对于download就必要添加progress了，直接在日志中记录
+        # TODO: 这里做一个网络连接的装饰器
+        progress = ChromeProgressSaver()
+        progress_info = progress.progress_info
 
-        if progress:
-            status = progress.get("status")
-            cls.scraped_categories = progress.get("scraped_categories")
+        if not progress.is_finished:
+            cls.scraped_categories = progress_info.get("scraped_categories")
+            cls.resume_uncompleted_scan(progress_info)
 
-            if status == 0:  # uncompleted
-                cls.resume_uncompleted_scan(progress)
+        cls.start_new_scans()
 
-        categories = cls.get_categories()
-        cls.start_new_scans(categories)
+        progress.save_progress(ProgressStatus.COMPLETED.value)
 
-        progress_info.save_progress(1)
+    @classmethod
+    def scan_one_category(cls, category_name: str, last_token: str = ""):
+        scraper = ChromeCategoryScraper(category_name, last_token)
+        try:
+            scraper.start()
+            cls.scraped_categories.append(category_name)
+        except Exception as e:
+            cls.handle_scraping_error(category_name, scraper.get_token, e)
 
     @classmethod
     def resume_uncompleted_scan(cls, progress: Dict) -> None:
         now_category = progress.get("now_category")
         break_reason = progress.get("break_reason")
+        last_token = progress.get("token")
 
+        # TODO: 改为Logger来进行
         print("Last break reason: ", break_reason)
 
-        scraper = ChromeCategoryScraper(now_category, progress.get("token"))
-        try:
-            scraper.start()
-            cls.scraped_categories.append(now_category)
-        except Exception as e:
-            cls.handle_scraping_error(now_category, scraper.get_token, e)
+        cls.scan_one_category(now_category, last_token)
 
     @classmethod
-    def start_new_scans(cls, categories: List[str]) -> None:
-        for category_name in categories:
-            if category_name not in cls.scraped_categories:
-                scraper = ChromeCategoryScraper(category_name)
-                try:
-                    scraper.start()
-                    cls.scraped_categories.append(category_name)
-                except Exception as e:
-                    cls.handle_scraping_error(category_name, scraper.get_token, e)
+    def start_new_scans(cls) -> None:
+        all_categories = cls.get_categories()
+        unscraped_categories = set(all_categories) - set(cls.scraped_categories)
 
-    @classmethod
-    def handle_scraping_error(cls, category_name: str, break_token: str, error: Exception) -> None:
+        for unscraped_category in unscraped_categories:
+            cls.scan_one_category(unscraped_category)
+
+    def handle_scraping_error(self, category_name: str, break_token: str, error: Exception) -> None:
         # Handle or log the scraping error as needed
+        # TODO: 改为Logger
         print(f"Error scraping category '{category_name}': {error}")
         progress_info = ChromeProgressSaver()
-        progress_info.save_progress(0, cls.scraped_categories, category_name, break_token, str(error))
+        # TODO: 对于save_progress的参数是否有点多？改为类的成员，后面再看
+        progress_info.save_progress(ProgressStatus.UNCOMPLETED.value, self.scraped_categories, category_name,
+                                    break_token, str(error))
         sys.exit()

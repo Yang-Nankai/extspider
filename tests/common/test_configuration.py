@@ -16,6 +16,26 @@ class TestConfiguration(TestCase):
         self.assertEqual(type(prod_version), str)
         self.assertGreater(len(prod_version), 0)
 
+    def test_request_id(self):
+        """Ensures that the request id (chrome_category & chrome_detail) is correct"""
+        chrome_category_request_id = conf.CHROME_CATEGORY_REQUEST_ID
+        self.assertIsNotNone(chrome_category_request_id)
+        self.assertEqual(type(chrome_category_request_id), str)
+        self.assertGreater(len(chrome_category_request_id), 0)
+        chrome_detail_request_id = conf.CHROME_DETAIL_REQUEST_ID
+        self.assertIsNotNone(chrome_detail_request_id)
+        self.assertEqual(type(chrome_detail_request_id), str)
+        self.assertGreater(len(chrome_detail_request_id), 0)
+
+    def test_http_headers(self):
+        """Ensure that the HTTP_HEADERS is correct"""
+        http_headers = conf.HTTP_HEADERS
+        self.assertIsInstance(http_headers, dict)
+        self.assertIsNotNone(http_headers)
+        self.assertIsNotNone(http_headers.get("User-Agent"))
+
+
+
     # @skipUnless(conf.IS_TELEGRAM_ENABLED,
     #             "Testing Telegram-related parameters")
     # def test_telegram_logging(self):

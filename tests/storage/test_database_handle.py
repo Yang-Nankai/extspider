@@ -1,4 +1,5 @@
 import os
+from datetime import date
 from unittest import TestCase
 
 from extspider.storage.database_handle import DatabaseHandle
@@ -82,22 +83,31 @@ class TestDatabaseHandle(TestCase):
 
     def test_store_extension(self):
         test_arguments = {
-            "extension_id": "a" * 32,
+            "id": "a" * 32,
             "name": "Test Extension Name",
+            "developer_name": "Test Developer Name",
             "category_name": "test_category",
             "download_count": 100000,
             "rating_count": 1234,
-            "rating_percentage": 89.1,
-            "latest_version": "1.2.345"
+            "rating_average": 3.8,
+            "manifest": {"manifest_version": 3, "permissions": ["tabs"]},
+            "byte_size": 10000,
+            "latest_version": "1.0.2",
+            "updated_at": date.today(),
+            "download_date": date.today()
         }
         stored_extension = DatabaseHandle.store_extension(
-            test_arguments["extension_id"],
+            test_arguments["id"],
             test_arguments["name"],
+            test_arguments["developer_name"],
             test_arguments["category_name"],
             test_arguments["download_count"],
             test_arguments["rating_count"],
-            test_arguments["rating_percentage"],
-            test_arguments["latest_version"]
+            test_arguments["rating_average"],
+            test_arguments["manifest"],
+            test_arguments["byte_size"],
+            test_arguments["latest_version"],
+            test_arguments["updated_at"],
         )
         with DatabaseHandle.get_session() as session:
             category = DatabaseHandle.get_or_create_extension_category(
@@ -105,7 +115,7 @@ class TestDatabaseHandle(TestCase):
                 test_arguments["category_name"]
             )
         self.assertEqual(stored_extension.id,
-                         test_arguments["extension_id"])
+                         test_arguments["id"])
         self.assertEqual(stored_extension.category_id,
                          category.id)
         self.assertEqual(category.name,
@@ -114,35 +124,40 @@ class TestDatabaseHandle(TestCase):
                          test_arguments["download_count"])
         self.assertEqual(stored_extension.rating_count,
                          test_arguments["rating_count"])
-        self.assertEqual(stored_extension.rating_percentage,
-                         test_arguments["rating_percentage"])
+        self.assertEqual(stored_extension.rating_average,
+                         test_arguments["rating_average"])
         self.assertEqual(stored_extension.latest_version,
                          test_arguments["latest_version"])
 
         with DatabaseHandle.get_session() as session:
             selected_extension = DatabaseHandle.get_or_create_extension(
-                session, test_arguments["extension_id"]
+                session, test_arguments["id"]
             )
 
         self.assertEqual(selected_extension.id, stored_extension.id)
 
-    def test_store_archive(self):
-        with DatabaseHandle.get_session() as session:
-            DatabaseHandle.get_or_create_extension(session, "a" * 32)
-
-        archive = DatabaseHandle.store_archive(
-            "a" * 32,
-            "0" * 16,
-            None,
-            False,
-            1,
-            [("vulnerable.js", None),
-             ("vulnerable.css", "<all_urls>"),
-             ("vulnerable.html", "*://*/*"),
-             ("vulnerable.json", "https://*/*"),
-             ("protected.csv", "https://*.google.com/*")]
+        stored_extension_permission = DatabaseHandle.store_extension_permission(
+            stored_extension
         )
+        self.assertEqual(stored_extension_permission.extension_id,
+                         test_arguments["id"])
+        self.assertEqual(stored_extension_permission.extension_version,
+                         test_arguments["latest_version"])
+        self.assertEqual(stored_extension_permission.manifest_version,
+                         stored_extension.manifest_version)
+        self.assertEqual(stored_extension_permission.permissions,
+                         stored_extension.manifest_permissions)
+        self.assertIsNone(stored_extension_permission.optional_permissions,)
+        self.assertIsNone(stored_extension_permission.content_scripts_matches)
+        self.assertIsNone(stored_extension_permission.host_permissions)
+        self.assertIsNone(stored_extension_permission.optional_host_permissions)
 
-        self.assertIsNotNone(archive)
-        self.assertGreater(len(archive.fingerprints), 0)
-        self.assertEqual(len(archive.fingerprints), 5)
+        with DatabaseHandle.get_session() as session:
+            selected_extension_permission = DatabaseHandle.get_or_create_extension_permission(
+                session, test_arguments["id"], test_arguments["latest_version"]
+            )
+
+        self.assertEqual(selected_extension_permission.extension_id,
+                         stored_extension_permission.extension_id)
+
+

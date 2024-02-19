@@ -83,5 +83,18 @@ TIMEOUT_SECONDS = CONFIGURATION["scraper_parameters"]["timeout_seconds"]
 UPDATE_SECONDS = CONFIGURATION["scraper_parameters"]["update_seconds"]
 STORE_URL = CONFIGURATION["scraper_parameters"]["store_url"]
 PROD_VERSION = CONFIGURATION["scraper_parameters"]["prod_version"]
+CHROME_CATEGORY_REQUEST_ID = CONFIGURATION["scraper_parameters"]["chrome_category_request_id"]
+CHROME_DETAIL_REQUEST_ID = CONFIGURATION["scraper_parameters"]["chrome_detail_request_id"]
+
+# Request
+HTTP_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+        "AppleWebKit/537.36 (KHTML, like Gecko)"
+        "Chrome/118.0.5993.90"
+    ),
+    "Host": "chromewebstore.google.com",
+    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+}
 
 # TODO: 添加飞书提示模块

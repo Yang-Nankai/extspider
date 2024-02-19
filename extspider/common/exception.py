@@ -26,3 +26,10 @@ class InvalidCategoryResponse(extSpiderBaseException):
 
 class ExtensionDownloadExtensionError(extSpiderBaseException):
     pass
+
+
+class UnexpectedDataStructure(ValueError):
+    """
+    Raised when an unprocessed data list does not adhere to the structure
+    defined by a DataMapper's INDEX_MAP.
+    """

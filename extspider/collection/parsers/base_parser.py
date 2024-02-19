@@ -2,6 +2,7 @@
 import abc
 from abc import ABC as AbstractClass
 from typing import Iterable, Callable, Any, Optional
+from extspider.common.exception import UnexpectedDataStructure
 
 
 class DataMapper(AbstractClass):
@@ -53,8 +54,7 @@ class DataMapper(AbstractClass):
     def __init__(self, raw_data: Iterable):
         self.raw_data = list(raw_data)
         if not self.is_data_structure_valid():
-            pass  # TODO: sometimes there is no user estimate
-            # raise UnexpectedDataStructure
+            raise UnexpectedDataStructure
 
     def is_data_structure_valid(self) -> bool:
         sentinel = object()
