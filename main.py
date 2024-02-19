@@ -19,7 +19,8 @@ def rename_extension_ids_file():
 
 if __name__ == '__main__':
     # 1. 首先快速爬取所有的extension_id, 生成extension_ids.txt文件
-    ChromeCategoryScraper.quick_scan()
+    if not os.path.exists(f"{DATA_PATH}/extension_ids.txt"):
+        ChromeCategoryScraper.quick_scan()
     # 2. 然后获取所有extension的细节，并下载crx文件，同时在数据库中存放信息
     run()
     # 3. 然后将extension_ids.txt存档，改为 日期_extension_ids.txt
