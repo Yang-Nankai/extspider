@@ -97,4 +97,6 @@ HTTP_HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
 }
 
+# 设置代理
+PROXIES = {}
 # TODO: 添加飞书提示模块

@@ -9,11 +9,10 @@ from extspider.common.exception import CategoryCollectionError, CategoryRequestE
 from extspider.collection.parsers.chrome_parser import ChromeCategoryResponseMapper
 from extspider.collection.progress_saver import ChromeProgressSaver
 from extspider.common.utils import request_retry_with_backoff
-from extspider.common.configuration import CHROME_CATEGORY_REQUEST_ID
+from extspider.common.configuration import (CHROME_CATEGORY_REQUEST_ID,
+                                            PROXIES, HTTP_HEADERS)
 from typing import Dict, List
 from extspider.collection.progress_saver import ProgressStatus
-from extspider.common.configuration import HTTP_HEADERS
-
 requests.packages.urllib3.disable_warnings()
 
 CATEGORY_NAMES_PATTERN = re.compile(r',\\\"([a-z_]+/[a-z_]+)\\\"')
@@ -85,7 +84,8 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         # TODO: 函数过长，逻辑过于混乱，需要清理(将request的内容单独领出来，取个好名字)
         response = requests.post(url=self.target_url,
                                  headers=HTTP_HEADERS,
-                                 data=self.request_body)
+                                 data=self.request_body,
+                                 proxies=PROXIES)
         if response.status_code != 200:
             raise CategoryRequestError
         details_data = self._response_text_to_details_list(response.text)
@@ -96,7 +96,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
 
     @classmethod
     def get_categories(cls) -> list[str]:
-        response = requests.get(BASE_URL)
+        response = requests.get(BASE_URL, proxies=PROXIES)
         if response.status_code != 200:
             raise CategoryCollectionError(response.reason)
         html = response.text

@@ -19,8 +19,8 @@ from extspider.collection.parsers.chrome_parser import ChromeExtensionDetailsMap
 from extspider.common.configuration import PROD_VERSION
 from extspider.storage.database_handle import DatabaseHandle
 from extspider.common.utils import request_retry_with_backoff
-from extspider.common.configuration import HTTP_HEADERS
-from extspider.common.configuration import CHROME_DETAIL_REQUEST_ID
+from extspider.common.configuration import (CHROME_DETAIL_REQUEST_ID,
+                                            PROXIES, HTTP_HEADERS)
 from extspider.common.context import DATA_PATH
 
 requests.packages.urllib3.disable_warnings()
@@ -104,7 +104,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         directory_path = os.path.dirname(download_path)
         pathlib.Path(directory_path).mkdir(parents=True, exist_ok=True)
         # TODO: Exception RequestException需要
-        response = requests.get(self.download_url, timeout=120, stream=True)
+        response = requests.get(self.download_url, timeout=120, stream=True, proxies=PROXIES)
         if response.status_code != 200:
             raise ExtensionDownloadExtensionError
 
@@ -117,7 +117,10 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         return os.path.exists(download_path)
 
     def get_extension_detail(self) -> List:
-        response = requests.post(self.details_url, headers=HTTP_HEADERS, data=self.request_body)
+        response = requests.post(self.details_url,
+                                 headers=HTTP_HEADERS,
+                                 data=self.request_body,
+                                 proxies=PROXIES)
         if response.status_code != 200:
             raise ExtensionRequestDetailError
         details_data = self._response_to_details_list(response.text)
