@@ -45,6 +45,7 @@ class ComplexEncoder(json.JSONEncoder):
         else:
             return json.JSONEncoder.default(self, obj)
 
+
 class TestChromeCategoryResponseMapper(TestCase):
     def test_map_data_list(self):
         parsed_data = ChromeCategoryResponseMapper.map_data_list(CATEGORY_DATA)

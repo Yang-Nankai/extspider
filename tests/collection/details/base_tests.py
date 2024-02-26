@@ -29,10 +29,7 @@ class BaseTests:
                 manifest={"version": "1.0.0",
                           "permissions": ["storage", "activeTab"]},
                 byte_size=1024,
-                developer_name="Sample Developer",
-                recommended_extensions=["bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-                                        "cccccccccccccccccccccccccccccccc"],
-                # reviews={"Luna": "This is very good extension."}
+                developer_name="Sample Developer"
             )
 
         def test_missing_identifier(self):
@@ -48,11 +45,6 @@ class BaseTests:
             # Test for deep copy
             original.manifest["permissions"].append("new_permission")
             self.assertNotEqual(original.manifest, copied.manifest)
-
-            original.recommended_extensions.append(
-                "cccccccccccccccccccccccccccccccc"
-            )
-            self.assertNotEqual(original.recommended_extensions, copied.recommended_extensions)
 
             # Ensuring that non-mutable fields are copied correctly
             self.assertEqual(original.name, copied.name)

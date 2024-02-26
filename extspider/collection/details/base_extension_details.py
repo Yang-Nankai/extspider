@@ -23,7 +23,6 @@ class BaseExtensionDetails:
     manifest: Optional[dict] = None
     byte_size: Optional[int] = None
     developer_name: Optional[str] = None
-    recommended_extensions: Optional[list] = None
 
     @property
     def download_url(self) -> str:
@@ -32,9 +31,6 @@ class BaseExtensionDetails:
     def __hash__(self):
         data_dict = asdict(self)
         data_dict["manifest"] = json.dumps(self.manifest, sort_keys=True)
-        data_dict["recommended_extensions"] = json.dumps(
-            self.recommended_extensions, sort_keys=True
-        )
         return hash(tuple(data_dict.values()))
 
     @classmethod

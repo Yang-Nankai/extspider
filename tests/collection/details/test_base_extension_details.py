@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-import os.path
-from .base_tests import BaseTests as BT
+from pathlib import Path
+from tests.collection.details.base_tests import BaseTests as BT
 from extspider.collection.details.base_extension_details import BaseExtensionDetails
 from extspider.common.context import DATA_PATH
 from dataclasses import astuple
 from extspider.common.exception import InvalidExtensionIdentifier
-DOWNLOAD_PATH = os.path.join(DATA_PATH, "a"*32)
+
+DOWNLOAD_PATH = Path(DATA_PATH) / "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 
 class TestBaseExtensionDetails(BT.DetailsTestCase):
@@ -41,7 +42,7 @@ class TestBaseExtensionDetails(BT.DetailsTestCase):
     def test_download(self):
         with self.assertRaises(NotImplementedError):
             original = self.get_test_details()
-            original.download(DOWNLOAD_PATH)
+            original.download(str(DOWNLOAD_PATH))
 
     def test_update_details(self):
         with self.assertRaises(NotImplementedError):

@@ -33,36 +33,7 @@ class BadCrx(IOError):
     pass
 
 
-# # TODO: 需要改变
-# def get_date_file_name(original_filename: str) -> str:
-#     current_date = datetime.datetime.now().strftime("%Y_%m_%d")
-#     return f"{current_date}_{original_filename}"
-#
-#
-# # TODO: 这里需要严重review，对于test也不好写
-# unique_data_filename = get_date_file_name("unique_data.csv")
-# with open(f"{DATA_PATH}/{unique_data_filename}", "a", encoding='utf-8') as handle:
-#     unqiue_file_handle = handle
-# unique_data_writter = csv.writer(unqiue_file_handle)
-
-
 class ChromeExtensionDetails(BaseExtensionDetails):
-
-    # def write_unique_data(self):
-    #     """
-    #     Write data to the CSV file.
-    #
-    #     Parameters:
-    #     - data: A tuple or list containing two values for the two columns in the file.
-    #     """
-    #     if self.identifier is None and self.version is None:
-    #         return
-    #     data = [self.identifier, self.version]
-    #     self.unique_data_writter.writerow(data)
-
-    # def __del__(self):
-    #     if not self.unqiue_file_handle.closed:
-    #         self.unqiue_file_handle.close()
 
     @property
     def request_body(self) -> Dict:
@@ -207,17 +178,12 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         crx_file.seek(header_length, os.SEEK_CUR)
 
     # TODO: 这里需不需要还是怎么更改位置
-    def save_metadata(self) -> None:
-        extension = DatabaseHandle.store_extension(self.identifier,
-                                                   self.name,
-                                                   self.developer_name,
-                                                   self.category,
-                                                   self.user_count,
-                                                   self.rating_count,
-                                                   self.rating_average,
-                                                   self.manifest,
-                                                   self.byte_size,
-                                                   self.version,
-                                                   self.last_update)
-        # TODO: 存储permission
+    def save_metadata(self):
+        extension = DatabaseHandle.store_extension(
+            self.identifier, self.name, self.developer_name, self.category,
+            self.user_count, self.rating_count, self.rating_average,
+            self.manifest, self.byte_size, self.version, self.last_update
+        )
+        #TODO: 存储permission，这里还是有点奇怪，不如直接将extension和version的数据绑定起来
+        # 但是需要考虑的是还需要有当日CWS中存在的extension的存储，这里还是需要根据最后的结果来判断
         DatabaseHandle.store_extension_permission(extension)

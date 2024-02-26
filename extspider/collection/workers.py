@@ -156,6 +156,7 @@ class CollectorWorker(Worker):
         try:
             extension.update_details()
             # TODO: 这里需要review，将id+version作为唯一标识写入
+            #  以 {"extension_id" : "version"}写入?
             # extension.write_unique_data()
 
         except Exception as error:

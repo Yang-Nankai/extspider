@@ -7,27 +7,6 @@ from typing import Callable
 from extspider.collection.parsers.base_parser import DataMapper
 
 
-class PartialDetailsMapper(DataMapper):
-    """Maps elements in a list containing some data about an extension."""
-
-    INDEX_MAP = {
-        "identifier": 0,
-        "name": 2,
-        "rating_average": 3,
-        "rating_count": 4,
-        # TODO: 先去掉user_estimate，这里存在一个问题有时候只有15字段，有时候有16字段
-        # "user_estimate": 14
-    }
-
-    @classmethod
-    def map_extension_items(cls, extension_items: list) -> list:
-        """Performs mapping on all the extension data in the given list."""
-        return [
-            cls.map_data_list(item)
-            for item in extension_items
-        ]
-
-
 class ChromeCategoryResponseMapper(DataMapper):
     """Maps category responses from the Chrome Web Store."""
     INDEX_MAP = {
@@ -50,8 +29,7 @@ class ChromeExtensionDetailsMapper(DataMapper):
         "user_count": [0, 14],
         "manifest": [20],  # encoded
         "byte_size": [15],  # printable format (e.g. '236KiB')
-        "developer_name": [10, 5],
-        "recommended_extensions": [22]  # list with different structure
+        "developer_name": [10, 5]
     }
 
     @property
@@ -60,15 +38,28 @@ class ChromeExtensionDetailsMapper(DataMapper):
             "manifest": self.parse_manifest,
             "byte_size": self.printable_bytes_to_int,
             "last_update": self.timestamp_to_date,
-            "recommended_extensions": PartialDetailsMapper.map_extension_items
+            #TODO: 这里严重需要改变
+            "user_count": self.str_to_int,
+            "rating_count": self.str_to_int,
+            "rating_average": self.str_to_float
         }
 
     @staticmethod
-    def timestamp_to_date(timestamp) -> date:
-        """
-        Converts a Unix timestamp to a date object.
-        """
+    def str_to_int(count) -> int:
+        """Converts a user count to int, if none return 0."""
+        if count is None:
+            return 0
+        return int(count)
 
+    @staticmethod
+    def str_to_float(rating) -> float:
+        if rating is None:
+            return 0
+        return round(float(rating), 2)
+
+    @staticmethod
+    def timestamp_to_date(timestamp) -> date:
+        """Converts a Unix timestamp to a date object."""
         datetime_obj = datetime.utcfromtimestamp(int(timestamp))
         converted_date = datetime_obj.date()
         return converted_date

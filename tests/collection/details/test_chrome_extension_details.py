@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
-from dataclasses import astuple
-from .base_tests import BaseTests as BT
+from tests.collection.details.base_tests import BaseTests as BT
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
 from extspider.common.context import TEST_SAMPLES_PATH
 from extspider.common.exception import MaxRequestRetryError
@@ -19,19 +18,19 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
         return ChromeExtensionDetails
 
     def setUp(self):
-        self.extension = ChromeExtensionDetails("aoogfbnigmjindidkbijnkccpdloijfg")
+        self.extension = ChromeExtensionDetails("pgcioedaijekepkjadkapaaaffjcekdf")
         self.bad_extension = ChromeExtensionDetails("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
     def test_get_extension_detail(self):
         # Extension exists
         processed_data = self.extension.get_extension_detail()
         self.assertIsNotNone(processed_data)
-        self.assertEqual(len(processed_data), 13)
+        self.assertEqual(len(processed_data), 12)
         self.assertIsNotNone(processed_data[0])
 
         # Extension not exists
         processed_data = self.bad_extension.get_extension_detail()
-        self.assertEqual(len(processed_data), 13)
+        self.assertEqual(len(processed_data), 12)
         for data in processed_data:
             self.assertIsNone(data)
 
@@ -59,11 +58,6 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
             self.bad_extension.download(str(TEST_BAD_DOWNLOAD_PATH))
             crx_file_exists = TEST_BAD_DOWNLOAD_PATH.exists()
             self.assertTrue(crx_file_exists)
-
-    # def test_write_unique_data(self):
-    #     identifier = "a" * 32
-    #     original = self.details_class(identifier, "test", version="1.0.0")
-    #     original.write_unique_data()
 
     def tearDown(self) -> None:
         if TEST_DOWNLOAD_PATH.exists():
