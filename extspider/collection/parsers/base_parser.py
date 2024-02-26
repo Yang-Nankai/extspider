@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import abc
 from abc import ABC as AbstractClass
-from typing import Iterable, Callable, Any, Optional
+from typing import Iterable, Callable, Any, Optional, List
 from extspider.common.exception import UnexpectedDataStructure
 
 
@@ -123,12 +123,12 @@ class DataMapper(AbstractClass):
             return value
         return transformer(value)
 
-    def to_list(self) -> list:
+    def to_list(self) -> List:
         """Returns a list structured as defined by INDEX_MAP."""
         return [self.get_data(attribute_name)
                 for attribute_name in self.INDEX_MAP.keys()]
 
     @classmethod
-    def map_data_list(cls, raw_data: Iterable) -> list:
+    def map_data_list(cls, raw_data: Iterable) -> List:
         """Converts raw_data to a list structured as defined by INDEX_MAP."""
         return cls(raw_data).to_list()

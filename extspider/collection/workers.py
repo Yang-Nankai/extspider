@@ -159,6 +159,7 @@ class CollectorWorker(Worker):
             # extension.write_unique_data()
 
         except Exception as error:
+            # TODO: 这里报错存在问题，需要去解决以及测试
             self.log(
                 f"Encountered {type(error).__name__} upon "
                 f"collecting {extension.identifier}",

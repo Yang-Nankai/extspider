@@ -16,7 +16,7 @@ class CategoryRequestTypesError(RequestError):
     pass
 
 
-class InvalidCategoryResponseFormat(extSpiderBaseException):
+class InvalidDetailResponseFormat(extSpiderBaseException):
     pass
 
 
@@ -24,17 +24,7 @@ class InvalidExtensionIdentifier(extSpiderBaseException):
     pass
 
 
-
-
-
-class ExtensionRequestDetailError(extSpiderBaseException):
-    pass
-
-
-
-
-
-class ExtensionDownloadExtensionError(extSpiderBaseException):
+class MaxRequestRetryError(extSpiderBaseException):
     pass
 
 

@@ -6,22 +6,21 @@ import sys
 from typing import Dict, List, Optional
 from extspider.common.context import DATA_PATH
 from extspider.collection.category.base_category_scraper import BaseCategoryScraper
-from extspider.common.exception import (CategoryRequestTypesError, CategoryRequestDetailsError,
-                                        InvalidCategoryResponseFormat, RequestError)
+from extspider.common.exception import (MaxRequestRetryError,
+                                        RequestError)
 from extspider.collection.parsers.chrome_parser import ChromeCategoryResponseMapper
 from extspider.collection.progress_saver import ChromeProgressSaver
-from extspider.common.utils import request_retry_with_backoff
+from extspider.common.utils import request_retry_with_backoff, details_response_to_json_format
 from extspider.common.configuration import (CHROME_CATEGORY_REQUEST_ID,
                                             PROXIES, HTTP_HEADERS,
                                             CHROME_SCRAPER_ONCE_NUM)
 from requests.exceptions import RequestException
 from extspider.common.log import get_logger
 from logging import Logger
+
 requests.packages.urllib3.disable_warnings()
 
-
 CATEGORY_NAMES_PATTERN = re.compile(r',\\\"([a-z_]+/[a-z_]+)\\\"')
-DETAILS_PATTERN = re.compile(r'(\[\[.*\]\])')
 
 BASE_URL = "https://chromewebstore.google.com"
 BASE_SOURCE_PATH = "category/extensions/{category}"
@@ -90,38 +89,29 @@ class ChromeCategoryScraper(BaseCategoryScraper):
 
     @request_retry_with_backoff(max_retries=5, retry_interval=2)
     def request_simple_details(self) -> Optional[List[str]]:
-        response = requests.post(url=self.target_url,
-                                 headers=HTTP_HEADERS,
-                                 data=self.request_body,
-                                 proxies=PROXIES)
-        if response.status_code != 200:
-            raise CategoryRequestDetailsError(f"response status code is {response.status_code}")
-
-        details_data = self._details_response_to_json_format(response.text)
-        details_list = self.update_token_and_get_details_list(details_data)
-
-        return details_list
+        try:
+            response = requests.post(url=self.target_url,
+                                     headers=HTTP_HEADERS,
+                                     data=self.request_body,
+                                     proxies=PROXIES)
+            response.raise_for_status()
+            details_data = details_response_to_json_format(response.text)
+            details_list = self.update_token_and_get_details_list(details_data)
+            return details_list
+        except MaxRequestRetryError as e:
+            print(f"Failed to get simple details: {str(e)}")
+            return
 
     @classmethod
-    def get_categories(cls) -> list[str]:
-        response = requests.get(url=BASE_URL,
-                                proxies=PROXIES)
-        if response.status_code != 200:
-            raise CategoryRequestTypesError(f"response status code is {response.status_code}")
-        html_ = response.text
-        return cls._get_category_names_from_html(html_)
-
-    @staticmethod
-    def _details_response_to_json_format(response_text: str) -> List:
-        """Remove irrelevant content from the response and convert it
-        into List type data using the JSON library."""
-        details_match = re.findall(DETAILS_PATTERN, response_text)
-
-        if details_match:
-            details = json.loads(json.loads(details_match[0])[0][2])
-            return details
-        else:
-            raise InvalidCategoryResponseFormat("The details response format is incorrect.")
+    def get_categories(cls) -> Optional[List[str]]:
+        try:
+            response = requests.get(url=BASE_URL, proxies=PROXIES)
+            response.raise_for_status()
+            html_ = response.text
+            return cls._get_category_names_from_html(html_)
+        except MaxRequestRetryError as e:
+            print(f"Failed to get categories: {str(e)}")
+            return
 
     @staticmethod
     def _get_category_names_from_html(html) -> list[str]:
@@ -158,7 +148,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         cls.scan_one_category(now_category, last_token)
 
     @classmethod
-    def start_new_scans(cls) -> None:
+    def start_new_scans(cls):
         all_categories = cls.get_categories()
         unscraped_categories = set(all_categories) - set(cls.scraped_categories)
 

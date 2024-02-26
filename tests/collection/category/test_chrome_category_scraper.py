@@ -2,6 +2,7 @@
 import requests
 from unittest import TestCase, skip
 from extspider.collection.category.chrome_category_scraper import ChromeCategoryScraper
+from extspider.common.exception import MaxRequestRetryError
 requests.packages.urllib3.disable_warnings()
 
 
@@ -30,8 +31,9 @@ class TestChromeCategoryScraper(TestCase):
 
         # Not exists category
         self.bad_scraper = ChromeCategoryScraper("productivity/fun")
-        bad_details = self.bad_scraper.request_simple_details()
-        self.assertIsNone(bad_details)
+        with self.assertRaises(MaxRequestRetryError):
+            bad_details = self.bad_scraper.request_simple_details()
+            self.assertIsNone(bad_details)
         self.bad_scraper.ids_writter.close()
 
     def test_collect_and_store(self):

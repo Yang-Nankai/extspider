@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-import os
+from pathlib import Path
 from dataclasses import astuple
-
 from .base_tests import BaseTests as BT
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
 from extspider.common.context import TEST_SAMPLES_PATH
-from extspider.common.configuration import HTTP_HEADERS
+from extspider.common.exception import MaxRequestRetryError
 
-SAMPLES_ROOT = os.path.join(TEST_SAMPLES_PATH, "chrome_extension_details")
-TEST_DOWNLOAD_PATH = os.path.join(SAMPLES_ROOT, "test_download.crx")
-TEST_MANIFEST_PATH = os.path.join(SAMPLES_ROOT, "manifest.json")
+SAMPLES_ROOT = Path(TEST_SAMPLES_PATH) / "chrome_extension_details"
+TEST_DOWNLOAD_PATH = SAMPLES_ROOT / "test_extension.crx"
+TEST_MANIFEST_PATH = SAMPLES_ROOT / "manifest.json"
+TEST_BAD_DOWNLOAD_PATH = SAMPLES_ROOT / "test_bad_extension.crx"
 
 
 class TestChromeExtensionDetails(BT.DetailsTestCase):
@@ -18,13 +18,27 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
     def details_class(self):
         return ChromeExtensionDetails
 
-    def setUp(self) -> None:
-        self.extension = ChromeExtensionDetails("pgcioedaijekepkjadkapaaaffjcekdf")
+    def setUp(self):
+        self.extension = ChromeExtensionDetails("aoogfbnigmjindidkbijnkccpdloijfg")
+        self.bad_extension = ChromeExtensionDetails("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
     def test_get_extension_detail(self):
+        # Extension exists
         processed_data = self.extension.get_extension_detail()
         self.assertIsNotNone(processed_data)
         self.assertEqual(len(processed_data), 13)
+        self.assertIsNotNone(processed_data[0])
+
+        # Extension not exists
+        processed_data = self.bad_extension.get_extension_detail()
+        self.assertEqual(len(processed_data), 13)
+        for data in processed_data:
+            self.assertIsNone(data)
+
+        # TODO: 这里需要当连接不到谷歌服务器的时候响应，需要增加测试！！！
+        # if internet_not_connected:
+        # cannot request
+        # processed_data = self.bad_extension.get_extension_detail()
 
     def test_update_details(self):
         has_changed = self.extension.update_details()
@@ -33,27 +47,18 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
         self.assertFalse(has_changed)
 
     def test_download(self):
-        self.extension.download(TEST_DOWNLOAD_PATH)
-        crx_file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
+        # Extension exists
+        self.extension.download(str(TEST_DOWNLOAD_PATH))
+        crx_file_exists = TEST_DOWNLOAD_PATH.exists()
         self.assertTrue(crx_file_exists)
-        manifest_file_exists = os.path.exists(TEST_MANIFEST_PATH)
+        manifest_file_exists = TEST_MANIFEST_PATH.exists()
         self.assertTrue(manifest_file_exists)
 
-    def test_update_from(self):
-        identifier = "a" * 32
-
-        original = self.details_class(identifier, "test", version="1.0.0")
-        change = astuple(self.details_class(identifier, "test", version="1.0.1"))
-        original.update_from(change)
-        self.assertEqual(original.version, "1.0.1")
-
-    def test_copy_from(self):
-        identifier = "a" * 32
-
-        original = self.details_class(identifier, "test", version="1.0.0")
-        change = self.details_class(identifier, "test", version="1.0.1")
-        original.copy_from(change)
-        self.assertEqual(original.version, change.version)
+        # Extentison not exists
+        with self.assertRaises(MaxRequestRetryError):
+            self.bad_extension.download(str(TEST_BAD_DOWNLOAD_PATH))
+            crx_file_exists = TEST_BAD_DOWNLOAD_PATH.exists()
+            self.assertTrue(crx_file_exists)
 
     # def test_write_unique_data(self):
     #     identifier = "a" * 32
@@ -61,10 +66,9 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
     #     original.write_unique_data()
 
     def tearDown(self) -> None:
-        crx_file_exists = os.path.exists(TEST_DOWNLOAD_PATH)
-        if crx_file_exists:
-            os.unlink(TEST_DOWNLOAD_PATH)
-        manifest_file_exists = os.path.exists(TEST_MANIFEST_PATH)
-        if manifest_file_exists:
-            os.unlink(TEST_MANIFEST_PATH)
-
+        if TEST_DOWNLOAD_PATH.exists():
+            TEST_DOWNLOAD_PATH.unlink()
+        if TEST_MANIFEST_PATH.exists():
+            TEST_MANIFEST_PATH.unlink()
+        if TEST_BAD_DOWNLOAD_PATH.exists():
+            TEST_MANIFEST_PATH.unlink()

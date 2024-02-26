@@ -4,7 +4,7 @@ from .base_tests import BaseTests as BT
 from extspider.collection.details.base_extension_details import BaseExtensionDetails
 from extspider.common.context import DATA_PATH
 from dataclasses import astuple
-
+from extspider.common.exception import InvalidExtensionIdentifier
 DOWNLOAD_PATH = os.path.join(DATA_PATH, "a"*32)
 
 
@@ -13,6 +13,14 @@ class TestBaseExtensionDetails(BT.DetailsTestCase):
     @property
     def details_class(self):
         return BaseExtensionDetails
+
+    def test_identifier(self):
+        correct_identifier = "a" * 32
+        extension = BaseExtensionDetails(correct_identifier)
+
+        wrong_identifier = "a" * 33
+        with self.assertRaises(InvalidExtensionIdentifier):
+            extension = BaseExtensionDetails(wrong_identifier)
 
     def test_update_from(self):
         identifier = "a" * 32

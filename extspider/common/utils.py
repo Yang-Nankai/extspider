@@ -2,9 +2,15 @@
 import random
 import re
 import string
-
 import requests
 import time
+import json
+from typing import List
+from extspider.common.exception import (InvalidDetailResponseFormat,
+                                        MaxRequestRetryError)
+from requests.exceptions import RequestException, HTTPError
+
+DETAILS_PATTERN = re.compile(r'(\[\[.*\]\])')
 
 
 def is_valid_extension_id(identifier: str) -> bool:
@@ -12,6 +18,18 @@ def is_valid_extension_id(identifier: str) -> bool:
     pattern = r'^[a-p]{32}$'
     match = re.match(pattern, identifier)
     return bool(match)
+
+
+def details_response_to_json_format(response_text: str) -> List:
+    """Remove irrelevant content from the response and convert it
+            into List type data using the JSON library."""
+    details_match = re.findall(DETAILS_PATTERN, response_text)
+
+    if details_match:
+        details = json.loads(json.loads(details_match[0])[0][2])
+        return details
+    else:
+        raise InvalidDetailResponseFormat("The details response format is incorrect.")
 
 
 def request_retry_with_backoff(max_retries=3, retry_interval=1):
@@ -23,9 +41,9 @@ def request_retry_with_backoff(max_retries=3, retry_interval=1):
             while retries < max_retries:
                 try:
                     result = func(*args, **kwargs)
-                except requests.exceptions.RequestException as e:
+                except (RequestException, HTTPError) as e:
                     # Log or handle the exception if needed
-                    print(f"RequestException: {e}, retrying...")
+                    print(f"RequestException: {str(e)}, retrying...")
                     result = False
 
                 if result:
@@ -33,6 +51,9 @@ def request_retry_with_backoff(max_retries=3, retry_interval=1):
 
                 retries += 1
                 time.sleep(retry_interval)
+
+            if not result:
+                raise MaxRequestRetryError
 
             return result
 
