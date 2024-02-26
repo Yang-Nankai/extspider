@@ -4,24 +4,34 @@ class extSpiderBaseException(Exception):
     pass
 
 
+class RequestError(extSpiderBaseException):
+    pass
+
+
+class CategoryRequestDetailsError(RequestError):
+    pass
+
+
+class CategoryRequestTypesError(extSpiderBaseException):
+    pass
+
+
+class InvalidCategoryResponse(extSpiderBaseException):
+    pass
+
+
 class InvalidExtensionIdentifier(extSpiderBaseException):
     pass
 
 
-class CategoryCollectionError(extSpiderBaseException):
-    pass
 
-
-class CategoryRequestError(extSpiderBaseException):
-    pass
 
 
 class ExtensionRequestDetailError(extSpiderBaseException):
     pass
 
 
-class InvalidCategoryResponse(extSpiderBaseException):
-    pass
+
 
 
 class ExtensionDownloadExtensionError(extSpiderBaseException):

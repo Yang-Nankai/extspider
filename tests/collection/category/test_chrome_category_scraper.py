@@ -22,7 +22,7 @@ class TestChromeCategoryScraper(TestCase):
         self.scraper = ChromeCategoryScraper("productivity/communication")
 
     def test_request_details(self):
-        details = self.scraper.request_details()
+        details = self.scraper.request_simple_details()
         self.assertIsNotNone(details)
         self.assertGreater(len(details), 0)
 
@@ -33,7 +33,7 @@ class TestChromeCategoryScraper(TestCase):
                              "MHFjdVpEUXpzUDE4X1RYX2xmb2MwX0xka1p5cnNfSE1TRTBnb3Z5eXNmbVVlVWttd3" \
                              "pkNkwtTjZYeDM1RVdtbkpRVlB3VzVhcWN1dnZvT3ZwLVpOcUdzN0Myd2ZsQzZYbFN" \
                              "SQXFpSHNBZ0pTZ0xEdWUzbW5ONWx3eWdadXZlOXJnPT0="
-        token_details = self.scraper.request_details()
+        token_details = self.scraper.request_simple_details()
         self.assertIsNotNone(token_details)
         self.assertGreater(len(token_details), 0)
 
@@ -41,12 +41,12 @@ class TestChromeCategoryScraper(TestCase):
 
         # Not exists category
         self.bad_scraper = ChromeCategoryScraper("productivity/fun")
-        bad_details = self.bad_scraper.request_details()
+        bad_details = self.bad_scraper.request_simple_details()
         self.assertIsNone(bad_details)
         self.bad_scraper.ids_writter.close()
 
     def test_collect_and_store(self):
-        details_data = self.scraper.request_details()
+        details_data = self.scraper.request_simple_details()
         self.assertGreater(len(details_data), 0)
         self.scraper.collect_and_store(details_data)
         self.assertGreater(len(self.scraper.found_ids), 0)

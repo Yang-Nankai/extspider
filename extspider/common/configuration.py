@@ -85,7 +85,10 @@ STORE_URL = CONFIGURATION["scraper_parameters"]["store_url"]
 PROD_VERSION = CONFIGURATION["scraper_parameters"]["prod_version"]
 CHROME_CATEGORY_REQUEST_ID = CONFIGURATION["scraper_parameters"]["chrome_category_request_id"]
 CHROME_DETAIL_REQUEST_ID = CONFIGURATION["scraper_parameters"]["chrome_detail_request_id"]
+CHROME_SCRAPER_ONCE_NUM = CONFIGURATION["scraper_parameters"]["chrome_scraper_once_num"]
 
+# TODO: 这里肯定是要离开的，全部放到yaml模块或者单独设置一个请求模块中，
+#  HTTP_HEADERS没有必要改变，但是PROXIES一定要放到configuration.yaml文件中
 # Request
 HTTP_HEADERS = {
     "User-Agent": (
@@ -98,5 +101,7 @@ HTTP_HEADERS = {
 }
 
 # 设置代理
-PROXIES = {}
+PROXIES = {
+    "http": "http://127.0.0.1:15777"
+}
 # TODO: 添加飞书提示模块

@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from typing import Iterable
-from extspider.collection.details.base_extension_details import BaseExtensionDetails
-
-
 class BaseCategoryScraper:
 
     def __init__(self, *args, **kwargs) -> None:
