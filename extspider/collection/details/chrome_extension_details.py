@@ -13,7 +13,7 @@ from zipfile import ZipFile, BadZipFile
 from typing import Dict, List, Iterable, Optional
 from io import BufferedReader, BytesIO
 from extspider.collection.details.base_extension_details import BaseExtensionDetails
-from extspider.common.exception import (ExtensionRequestDetailError, InvalidCategoryResponse,
+from extspider.common.exception import (ExtensionRequestDetailError, InvalidCategoryResponseFormat,
                                         ExtensionDownloadExtensionError)
 from extspider.collection.parsers.chrome_parser import ChromeExtensionDetailsMapper
 from extspider.common.configuration import PROD_VERSION
@@ -73,7 +73,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
             details = json.loads(json.loads(details_match[0])[0][2])
             return details
         else:
-            raise InvalidCategoryResponse
+            raise InvalidCategoryResponseFormat
 
     @property
     def request_body(self) -> Dict:

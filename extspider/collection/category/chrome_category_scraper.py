@@ -6,16 +6,17 @@ import sys
 from typing import Dict, List, Optional
 from extspider.common.context import DATA_PATH
 from extspider.collection.category.base_category_scraper import BaseCategoryScraper
-from extspider.common.exception import CategoryRequestTypesError, CategoryRequestDetailsError, InvalidCategoryResponse
+from extspider.common.exception import (CategoryRequestTypesError, CategoryRequestDetailsError,
+                                        InvalidCategoryResponseFormat, RequestError)
 from extspider.collection.parsers.chrome_parser import ChromeCategoryResponseMapper
 from extspider.collection.progress_saver import ChromeProgressSaver
 from extspider.common.utils import request_retry_with_backoff
 from extspider.common.configuration import (CHROME_CATEGORY_REQUEST_ID,
                                             PROXIES, HTTP_HEADERS,
                                             CHROME_SCRAPER_ONCE_NUM)
+from requests.exceptions import RequestException
 from extspider.common.log import get_logger
 from logging import Logger
-from extspider.collection.progress_saver import ProgressStatus
 requests.packages.urllib3.disable_warnings()
 
 
@@ -32,16 +33,18 @@ class ChromeCategoryScraper(BaseCategoryScraper):
     found_ids = set()
     scraped_categories = list()
 
-    def __init__(self, category_name: str) -> None:
+    def __init__(self, category_name: str, token: str = "") -> None:
         self.category_name = category_name
         self.source_path = BASE_SOURCE_PATH.format(category=category_name)
-        self.once_num = None
-        self.token = None
-        self.target_url = None
-        self.request_id = None
-        self.ids_writter = None
+        self.once_num = CHROME_SCRAPER_ONCE_NUM
+        self.token = token
+        self.request_id = CHROME_CATEGORY_REQUEST_ID
+        self.target_url = f"{BASE_REQUEST_URL}?rpcids={self.request_id}" \
+                          f"&source-path={self.source_path}"
+        self.ids_writter = open(f"{DATA_PATH}/extension_ids.txt", "a", encoding='utf-8')
+        # TODO: 同时这里"extension_id":"verison" 这种结果需要放在detail代码中，并添加进度条的内容???
         # TODO: 日志处理这块，看完B站视频之后再处理
-        self.logger = None
+        # self.logger: Logger = get_logger("Chrome_category_scraper")
 
     @property
     def request_body(self) -> Dict:
@@ -53,18 +56,6 @@ class ChromeCategoryScraper(BaseCategoryScraper):
     @property
     def get_token(self) -> str:
         return self.token
-
-    def setup(self) -> None:
-        self.token = ""
-        self.once_num = CHROME_SCRAPER_ONCE_NUM
-        self.request_id = CHROME_CATEGORY_REQUEST_ID
-        self.target_url = f"{BASE_REQUEST_URL}?rpcids={self.request_id}" \
-                          f"&source-path={self.source_path}"
-        # TODO: 使用pandas库来处理csv文件，将其改为csv文件，并在爬取结束后进行删除或许更加方便一点，相比于直接从txt文件中
-        #  同时这里"extension_id":"verison" 这种结果需要放在detail代码中，并添加进度条的内容???
-        self.ids_writter = open(f"{DATA_PATH}/extension_ids.txt", "a", encoding='utf-8')
-        # TODO: 这里Logger是否需要?
-        # self.logger: Logger = get_logger("Chrome_category_scraper")
 
     def start(self):
         # TODO: 改为Logger记录
@@ -130,7 +121,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
             details = json.loads(json.loads(details_match[0])[0][2])
             return details
         else:
-            raise InvalidCategoryResponse
+            raise InvalidCategoryResponseFormat("The details response format is incorrect.")
 
     @staticmethod
     def _get_category_names_from_html(html) -> list[str]:
@@ -138,7 +129,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         return CATEGORY_NAMES_PATTERN.findall(html)
 
     @classmethod
-    def quick_scan(cls):
+    def quick_scan(cls) -> None:
         progress = ChromeProgressSaver()
         progress_info = progress.progress_info
 
@@ -148,7 +139,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
 
         cls.start_new_scans()
 
-        progress.save_progress(ProgressStatus.COMPLETED.value)
+        progress.save_completed_progress()
 
     @classmethod
     def scan_one_category(cls, category_name: str, last_token: str = ""):
@@ -156,19 +147,13 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         try:
             scraper.start()
             cls.scraped_categories.append(category_name)
-        except Exception as e:
+        except (RequestException, RequestError) as e:
             cls.handle_scraping_error(category_name, scraper.get_token, e)
 
-    # TODO: 保留这里的进度，但是需要考虑代码的简洁性，这里感觉代码不太干净，尽量将整个恢复进度过程放在一个函数，
-    #  以及下面的handle_scraping_error名字
     @classmethod
     def resume_uncompleted_scan(cls, progress: Dict) -> None:
         now_category = progress.get("now_category")
-        break_reason = progress.get("break_reason")
         last_token = progress.get("token")
-
-        # TODO: 改为Logger来进行
-        print("Last break reason: ", break_reason)
 
         cls.scan_one_category(now_category, last_token)
 
@@ -180,12 +165,11 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         for unscraped_category in unscraped_categories:
             cls.scan_one_category(unscraped_category)
 
-    def handle_scraping_error(self, category_name: str, break_token: str, error: Exception) -> None:
-        # Handle or log the scraping error as needed
-        # TODO: 改为Logger
+    def handle_scraping_error(self, category_name: str, break_token: str, error: Exception):
+        progress = ChromeProgressSaver()
+        progress.save_uncompleted_progress(self.scraped_categories,
+                                           category_name, break_token)
+        # TODO: 将break_reason使用Logger记录
         print(f"Error scraping category '{category_name}': {error}")
-        progress_info = ChromeProgressSaver()
-        # TODO: 对于save_progress的参数是否有点多？改为类的成员，后面再看
-        progress_info.save_progress(ProgressStatus.UNCOMPLETED.value, self.scraped_categories, category_name,
-                                    break_token, str(error))
+        # TODO: 这里直接使用exit退出是否有问题?
         sys.exit()

@@ -2,18 +2,7 @@
 import requests
 from unittest import TestCase, skip
 from extspider.collection.category.chrome_category_scraper import ChromeCategoryScraper
-
 requests.packages.urllib3.disable_warnings()
-
-HTTP_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        "AppleWebKit/537.36 (KHTML, like Gecko)"
-        "Chrome/118.0.5993.90"
-    ),
-    "Host": "chromewebstore.google.com",
-    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-}
 
 
 class TestChromeCategoryScraper(TestCase):
@@ -21,7 +10,7 @@ class TestChromeCategoryScraper(TestCase):
     def setUp(self):
         self.scraper = ChromeCategoryScraper("productivity/communication")
 
-    def test_request_details(self):
+    def test_request_simple_details(self):
         details = self.scraper.request_simple_details()
         self.assertIsNotNone(details)
         self.assertGreater(len(details), 0)

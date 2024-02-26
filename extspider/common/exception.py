@@ -12,11 +12,11 @@ class CategoryRequestDetailsError(RequestError):
     pass
 
 
-class CategoryRequestTypesError(extSpiderBaseException):
+class CategoryRequestTypesError(RequestError):
     pass
 
 
-class InvalidCategoryResponse(extSpiderBaseException):
+class InvalidCategoryResponseFormat(extSpiderBaseException):
     pass
 
 

@@ -12,10 +12,6 @@ class ProgressStatus(Enum):
 
 
 class ProgressSaver(ABC):
-    @abstractmethod
-    def save_progress(self) -> None:
-        raise NotImplementedError
-
     @property
     @abstractmethod
     def progress_info(self) -> Optional[Dict]:
@@ -29,7 +25,7 @@ class ProgressSaver(ABC):
 
 class ChromeProgressSaver(ProgressSaver):
     def __init__(self, filename: str = "chrome_progress.json"):
-        # TODO: 对于chrome_progress的路径由configuration指定
+        # TODO : 对于chrome_progress的路径由configuration指定
         self.filename = f"{DATA_PATH}/{filename}"
 
     @property
@@ -51,16 +47,25 @@ class ChromeProgressSaver(ProgressSaver):
         except FileNotFoundError:
             return None
 
-    def save_progress(self, status: int, scraped_categories: List[str] = [],
-                      now_category: Optional[str] = None, token: Optional[str] = None,
-                      break_reason: Optional[str] = None) -> None:
+    def save_uncompleted_progress(self, scraped_categories: List[str],
+                                  now_category: str, token: Optional[str]):
         progress = {
-            "status": status,
+            "status": ProgressStatus.UNCOMPLETED.value,
             "scraped_categories": scraped_categories,
             "now_category": now_category,
-            "token": token,
-            "break_reason": break_reason
+            "token": token
         }
         with open(self.filename, "w") as file:
             json.dump(progress, file)
+
+    def save_completed_progress(self):
+        progress = {
+            "status": ProgressStatus.COMPLETED.value,
+            "scraped_categories": list(),
+            "now_category": "",
+            "token": ""
+        }
+        with open(self.filename, "w") as file:
+            json.dump(progress, file)
+
 
