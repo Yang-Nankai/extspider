@@ -8,7 +8,6 @@ from sqlalchemy.sql import text
 from extspider.common.configuration import DB_PATH
 from extspider.storage.models.common import BaseModel
 from extspider.storage.models.extension import Extension, ExtensionCategory
-from extspider.storage.models.permission import ExtensionPermission
 
 DATABASE_NAME = "database.sqlite"
 DATABASE_PATH = os.path.join(DB_PATH, DATABASE_NAME)
@@ -77,27 +76,6 @@ class DatabaseHandle:
         return extension
 
     @classmethod
-    def get_or_create_extension_permission(cls,
-                                           session: ScopedSession,
-                                           extension_id: str,
-                                           extension_version: str) -> ExtensionPermission:
-        extension_permisson = session.query(
-            ExtensionPermission
-        ).where(
-            and_(
-                ExtensionPermission.extension_id == extension_id,
-                ExtensionPermission.extension_version == extension_version
-            )
-        ).first()
-
-        if extension_permisson is None:
-            extension_permisson = ExtensionPermission(extension_id, extension_version)
-            session.add(extension_permisson)
-            session.commit()
-
-        return extension_permisson
-
-    @classmethod
     def get_or_create_extension_category(
             cls,
             session: ScopedSession,
@@ -152,26 +130,3 @@ class DatabaseHandle:
             session.commit()
 
         return extension
-
-    @classmethod
-    def store_extension_permission(cls,
-                                   extension: Extension) -> ExtensionPermission:
-        if extension is None:
-            return
-
-        with cls.get_session() as session:
-            permission = ExtensionPermission(
-                extension_id=extension.id,
-                extension_version=extension.latest_version,
-                manifest_version=extension.manifest_version,
-                permissions=extension.manifest_permissions,
-                optional_permissions=extension.manifest_optional_permissions,
-                content_scripts_matches=extension.manifest_content_scripts_matches,
-                host_permissions=extension.manifest_host_permissions,
-                optional_host_permissions=extension.manifest_optional_host_permissions
-            )
-
-            session.merge(permission)
-            session.commit()
-
-        return permission
