@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
-from unittest import TestCase
+from pathlib import Path
+from unittest import TestCase, skip
 from extspider.collection.workers import Counter
-from extspider.collection.workers import CollectorWorker
+from extspider.collection.workers import CollectorWorker, DatabaseWorker
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
+from extspider.storage.extension_handle import ExtensionHandle
+from extspider.common.exception import MaxRequestRetryError
+from extspider.common.configuration import DB_PATH
+from extspider.storage.database_handle import DatabaseHandle
+
+DATABASE_NAME = "database.sqlite"
+DATABASE_PATH = Path(DB_PATH) / DATABASE_NAME
 
 
 class TestCounter(TestCase):
@@ -73,5 +81,72 @@ class TestCollectorWorker(TestCase):
 
         self.assertEqual(self.collector_worker.finished_queue.qsize(), 0)
 
+    @skip
     def test_download_extension(self):
-        pass
+        for extension_id in self.extension_ids:
+            extension = ChromeExtensionDetails(extension_id)
+            self.collector_worker.collect_details(extension)
+            is_success = self.collector_worker.download_extension(extension)
+            self.assertTrue(is_success)
+            download_path = ExtensionHandle.get_extension_storage_path(
+                extension.identifier,
+                extension.version
+            )
+            self.assertTrue(Path(download_path).is_file())
+
+        # Test no version extension
+        extension = ChromeExtensionDetails(
+            identifier=self.extension_ids[0],
+            version=None
+        )
+        is_success = self.collector_worker.download_extension(extension)
+        self.assertTrue(is_success)
+        download_path = ExtensionHandle.get_extension_storage_path(
+            extension.identifier,
+            extension.version
+        )
+        self.assertTrue(Path(download_path).is_file())
+
+        # Test bad none extension
+        extension = ChromeExtensionDetails(
+            identifier="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            version="1.0.1"
+        )
+        is_success = self.collector_worker.download_extension(extension)
+        self.assertFalse(is_success)
+        download_path = ExtensionHandle.get_extension_storage_path(
+            extension.identifier,
+            extension.version
+        )
+        self.assertFalse(Path(download_path).is_file())
+
+@skip
+class TestDatabaseWorker(TestCase):
+
+    def setUp(self) -> None:
+        DatabaseHandle.setup_engine(DATABASE_PATH)
+        self.database_worker = DatabaseWorker()
+
+    def tearDown(self) -> None:
+        if DatabaseHandle.engine is not None:
+            DatabaseHandle.Session.remove()
+            DatabaseHandle.engine.dispose()
+            DatabaseHandle.engine = None
+
+        if Path(DATABASE_PATH).is_file():
+            Path(DATABASE_PATH).unlink()
+    def test_save_extension(self):
+        extension = ChromeExtensionDetails("mffednhfmeflihkcikanfhpnincpkejc")
+        extension.update_details()
+        is_success = self.database_worker.save_extension(extension)
+        self.assertTrue(is_success)
+        session = DatabaseHandle.get_session()
+        original_extension = DatabaseHandle.get_or_create_extension(
+            session, extension.identifier, extension.version
+        )
+        self.assertIsNotNone(original_extension)
+        self.assertIsNotNone(original_extension.name)
+
+
+class TestProgressTrackerWorker(TestCase):
+    pass

@@ -238,10 +238,8 @@ class DatabaseWorker(Worker):
 
     save_queue = CollectorWorker.finished_queue
     saved_extensions_count = Counter()
-    # saved_archives_count = Counter()
 
     failed_extensions_queue: Queue[BaseExtensionDetails] = Queue()
-    # failed_archives_queue: Queue[CrxArchive] = Queue()
 
     finished_event = Event()
 
@@ -257,7 +255,6 @@ class DatabaseWorker(Worker):
 
     def save_extension(self, extension: BaseExtensionDetails) -> bool:
         try:
-            # TODO: 这里思考一下需不需要添加
             extension.save_metadata()
 
         except Exception as error:
@@ -271,16 +268,14 @@ class DatabaseWorker(Worker):
         return True
 
     def work(self,
-             metadata: Union[BaseExtensionDetails, CrxArchive]) -> None:
+             metadata: BaseExtensionDetails) -> None:
 
-        # TODO: 这里原本是==，改为了instance，因为==无法检测出继承关系？
         if isinstance(metadata, BaseExtensionDetails):
             if self.save_extension(metadata):
                 self.saved_extensions_count.increment()
 
     def run(self) -> None:
-        self.log("Ready", logging.INFO)
-        print("Storage Started...")
+        self.log(f"{self.name} is ready and run...", logging.INFO)
         while not self.is_exit_condition_reached:
             try:
                 extension = self.save_queue.get(timeout=10)

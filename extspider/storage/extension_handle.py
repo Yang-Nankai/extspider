@@ -17,6 +17,7 @@ tree, structured as follows.
 from typing import Optional, Dict
 import json
 import os
+from pathlib import Path
 from extspider.common.configuration import STORAGE_PATH
 from extspider.storage.crx_archive import CrxArchive
 
@@ -41,38 +42,37 @@ class ExtensionHandle:
             storage_path (Optional[str]): alternative path for storing
             extension archives
         """
-        if os.path.isdir(EXTENSIONS_DIRECTORY_PATH):
+        if Path(EXTENSIONS_DIRECTORY_PATH).is_dir():
             return
 
-        if storage_path is None or not os.path.isdir(storage_path):
-            os.mkdir(EXTENSIONS_DIRECTORY_PATH)
+        if storage_path is None or not Path(storage_path).is_dir():
+            Path(EXTENSIONS_DIRECTORY_PATH).mkdir(parents=True)
         else:
-            os.symlink(storage_path, EXTENSIONS_DIRECTORY_PATH)
+            Path(storage_path).symlink_to(EXTENSIONS_DIRECTORY_PATH)
 
-    # TODO: 这里需要review一下，代码写得太丑了
     @classmethod
     def get_extension_storage_directory(cls, extension_id: str, version_name: str) -> str:
-        extension_path = os.path.join(EXTENSIONS_DIRECTORY_PATH, extension_id)
+        extension_path = Path(EXTENSIONS_DIRECTORY_PATH) / extension_id
 
         if version_name is None:
             version_name = "UNKNOWN"
 
-        return os.path.join(extension_path, version_name)
+        return str(extension_path / version_name)
 
     @classmethod
-    def get_extension_storage_path(cls, extension_id: str, version_name: str) -> str:
+    def get_extension_storage_path(cls, identifier: str, version: str) -> str:
         """
         get_extension_storage_path
 
         Args:
-            extension_id (str): an extension identifier
-            version_name (str): the version of the extension
+            identifier (str): an extension identifier
+            version (str): the version of the extension
 
         Returns:
             str: the directory path where the extension release is stored
         """
-        storage_directory = cls.get_extension_storage_directory(extension_id, version_name)
-        return os.path.join(storage_directory, f'{extension_id}.{version_name}.crx')
+        storage_directory = cls.get_extension_storage_directory(identifier, version)
+        return str(Path(storage_directory) / f'{identifier}.{version}.crx')
 
     @classmethod
     def store_extension_archive(cls,

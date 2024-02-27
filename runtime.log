@@ -344,3 +344,8 @@
 2024-02-27 17:24:42,536 - collector_worker-#1 - ERROR - Encountered UnexpectedDataStructure upon collecting aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 2024-02-27 17:27:46,555 - collector_worker-#1 - ERROR - Encountered UnexpectedDataStructure upon collecting aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 2024-02-27 17:28:07,547 - collector_worker-#1 - ERROR - Encountered UnexpectedDataStructure upon collecting aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+2024-02-27 18:01:31,430 - collector_worker-#1 - ERROR - Encountered MaxRequestRetryError upon downloading aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+2024-02-27 18:02:43,782 - collector_worker-#1 - ERROR - Encountered MaxRequestRetryError upon downloading aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+2024-02-27 18:04:39,631 - collector_worker-#1 - ERROR - Encountered MaxRequestRetryError upon downloading aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+2024-02-27 18:23:51,154 - collector_worker-#1 - ERROR - Encountered UnexpectedDataStructure upon collecting aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+2024-02-27 18:24:02,246 - collector_worker-#1 - ERROR - Encountered UnexpectedDataStructure upon collecting aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

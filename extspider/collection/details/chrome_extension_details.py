@@ -178,14 +178,10 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
         crx_file.seek(header_length, os.SEEK_CUR)
 
-    # TODO: 这里需不需要还是怎么更改位置
     def save_metadata(self):
         # TODO: 对于version这里需要更改逻辑，如果没有则调用version_name
         extension = DatabaseHandle.store_extension(
-            self.identifier, self.name, self.developer_name, self.category,
-            self.user_count, self.rating_count, self.rating_average,
-            self.manifest, self.byte_size, self.version, self.last_update
+            self.identifier, self.version, self.name, self.developer_name,
+            self.category, self.user_count, self.rating_count, self.rating_average,
+            self.manifest, self.byte_size, self.last_update
         )
-        #TODO: 存储permission，这里还是有点奇怪，不如直接将extension和version的数据绑定起来
-        # 但是需要考虑的是还需要有当日CWS中存在的extension的存储，这里还是需要根据最后的结果来判断
-        DatabaseHandle.store_extension_permission(extension)
