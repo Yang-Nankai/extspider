@@ -3,7 +3,7 @@ import json
 import re
 from datetime import date, datetime
 from codecs import BOM_UTF8
-from typing import Callable
+from typing import Callable, Optional
 from extspider.collection.parsers.base_parser import DataMapper
 
 
@@ -38,34 +38,24 @@ class ChromeExtensionDetailsMapper(DataMapper):
             "manifest": self.parse_manifest,
             "byte_size": self.printable_bytes_to_int,
             "last_update": self.timestamp_to_date,
-            #TODO: 这里严重需要改变
-            "user_count": self.str_to_int,
-            "rating_count": self.str_to_int,
-            "rating_average": self.str_to_float
+            "version": self.valid_version
         }
 
     @staticmethod
-    def str_to_int(count) -> int:
-        """Converts a user count to int, if none return 0."""
-        if count is None:
-            return 0
-        return int(count)
+    def valid_version(version: Optional[str]) -> str:
+        if version is None:
+            return ""
+        return version
 
     @staticmethod
-    def str_to_float(rating) -> float:
-        if rating is None:
-            return 0
-        return round(float(rating), 2)
-
-    @staticmethod
-    def timestamp_to_date(timestamp) -> date:
+    def timestamp_to_date(timestamp: str) -> date:
         """Converts a Unix timestamp to a date object."""
         datetime_obj = datetime.utcfromtimestamp(int(timestamp))
         converted_date = datetime_obj.date()
         return converted_date
 
     @staticmethod
-    def printable_bytes_to_int(printable_size) -> int:
+    def printable_bytes_to_int(printable_size: str) -> int:
         unit_conversion = {
             "KiB": 1024,
             "MiB": 1024 ** 2,

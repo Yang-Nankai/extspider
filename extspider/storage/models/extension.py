@@ -7,9 +7,10 @@ from datetime import date
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from sqlalchemy.sql.functions import current_date
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import String, Date, Numeric, ForeignKey, JSON, BigInteger, Integer, case, null
+from sqlalchemy import (String, Date, Numeric, ForeignKey, JSON,
+                        BigInteger, Integer, case, null, PrimaryKeyConstraint)
 
-from extspider.common.utils import is_valid_extension_id
+from extspider.common.utils import is_valid_extension_id, is_valid_extension_version
 from extspider.storage.models.common import BaseModel
 
 
@@ -40,7 +41,8 @@ class Extension(BaseModel):
     """
     __tablename__ = "extensions"
 
-    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    id: Mapped[str] = mapped_column(String(32))
+    version: Mapped[Optional[str]] = mapped_column()
     name: Mapped[Optional[str]]
     developer_name: Mapped[Optional[str]]
     category_id: Mapped[Optional[int]] = mapped_column(
@@ -53,22 +55,29 @@ class Extension(BaseModel):
     )
     manifest: Mapped[Optional[Dict]] = mapped_column(JSON)
     byte_size: Mapped[Optional[int]] = mapped_column(BigInteger)
-    latest_version: Mapped[Optional[str]]
     updated_at: Mapped[Optional[date]]
     download_date: Mapped[Date] = mapped_column(Date(),
                                                 server_default=current_date(),
                                                 onupdate=current_date())
+
+    # Define a composite primary key using PrimaryKeyConstraint
+    __table_args__ = (
+        PrimaryKeyConstraint('id', 'version'),
+    )
     category: Mapped["ExtensionCategory"] = relationship(
         back_populates="extensions"
     )
 
     def __init__(self,
-                 extension_id: Optional[str] = None,
+                 id: Optional[str] = None,
+                 version: Optional[str] = None,
                  category: Optional[ExtensionCategory] = None,
                  **kw: Any) -> None:
         super().__init__(**kw)
-        if extension_id is not None:
-            self.id = extension_id
+        if id is not None:
+            self.id = id
+        if version is not None:
+            self.version = version
         if category is not None:
             self.category = category
 
@@ -90,15 +99,25 @@ class Extension(BaseModel):
         is_valid = is_valid_extension_id(id)
 
         if not is_valid:
-            raise ValueError(f"The provided extension identifier '{id} is invalid'."
+            raise ValueError(f"The provided extension identifier '{id}' is invalid."
                              f"Only [a-p]*32 are allowed.")
 
         return id
 
+    @validates("version")
+    def validate_version(self, _, version: str) -> str:
+        # key and version are expected to be the same value
+        is_valid = is_valid_extension_version(version)
+
+        if not is_valid:
+            raise ValueError(f"The provided extension version '{version}' is invalid.")
+
+        return version
+
     @validates("download_count")
     def validate_download_count(self, _, download_count: int) -> int:
         if download_count is None:
-            return
+            return 0
 
         if download_count < 0:
             raise ValueError(
@@ -110,7 +129,7 @@ class Extension(BaseModel):
     @validates("rating_count")
     def validate_rating_count(self, _, rating_count: int) -> int:
         if rating_count is None:
-            return
+            return 0
 
         if rating_count < 0:
             raise ValueError(
@@ -123,7 +142,7 @@ class Extension(BaseModel):
     def validate_rating_average(self, _,
                                 rating_average: Decimal) -> Decimal:
         if rating_average is None:
-            return
+            return 0
 
         if rating_average < 0 or rating_average > 5:
             raise ValueError(
@@ -136,7 +155,7 @@ class Extension(BaseModel):
     @validates("byte_size")
     def validate_byte_size(self, _, byte_size: int) -> int:
         if byte_size is None:
-            return
+            return 0
 
         if byte_size <= 0:
             raise ValueError(
@@ -145,6 +164,22 @@ class Extension(BaseModel):
             )
 
         return byte_size
+
+    @hybrid_property
+    def version_name(self) -> Optional[str]:
+        if self.manifest is None:
+            return None
+
+        return self.manifest.get("version_name",
+                                 self.manifest.get("version"))
+
+    @version_name.expression
+    def version_name(cls) -> Optional[str]:
+        return case(
+            (cls.manifest.op("->>")("version_name") == null(),
+             cls.manifest.op("->>")("version")),
+            else_=cls.manifest.op("->>")("version_name")
+        ).cast(String)
 
     @hybrid_property
     def manifest_version(self) -> Optional[int]:
@@ -206,28 +241,4 @@ class Extension(BaseModel):
     def manifest_optional_host_permissions(cls) -> Optional[int]:
         return cls.manifest.op("->>")("optional_host_permissions").cast(list)
 
-    @hybrid_property
-    def version_name(self) -> Optional[str]:
-        if self.manifest is None:
-            return None
 
-        return self.manifest.get("version_name",
-                                 self.manifest.get("version"))
-
-    @version_name.expression
-    def version_name(cls) -> Optional[str]:
-        return case(
-            (cls.manifest.op("->>")("version_name") == null(),
-             cls.manifest.op("->>")("version")),
-            else_=cls.manifest.op("->>")("version_name")
-        ).cast(String)
-
-    @staticmethod
-    def get_invalid_characters_from_id(id: str) -> str:
-        valid_characters = "abcdefghijklmnop"
-        unexpected_characters = ""
-        for character in id:
-            if character not in valid_characters:
-                unexpected_characters += character
-
-        return unexpected_characters

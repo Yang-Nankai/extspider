@@ -10,7 +10,7 @@ from unittest import TestCase
 from extspider.common.context import TEST_SAMPLES_PATH
 from extspider.storage.models.common import (BaseModelTestCase,
                                              TEST_RECORDS_AMOUNT)
-from extspider.common.utils import get_random_extension_id
+from extspider.common.utils import get_random_extension_id, get_random_extension_version
 from extspider.storage.models.extension import Extension, ExtensionCategory
 
 # region TEST SAMPLES INITIALISATION
@@ -32,11 +32,23 @@ class TestExtension(BaseModelTestCase, TestCase):
 
     def assertInvalidId(self, invalid_id: str) -> None:
         with self.assertRaises(ValueError):
-            self.session.add(Extension(invalid_id))
+            self.session.add(
+                Extension(invalid_id), get_random_extension_version()
+            )
 
     def assertInvalidIds(self, invalid_id_list: List[str]) -> None:
         for invalid_id in invalid_id_list:
             self.assertInvalidId(invalid_id)
+
+    def assertInvalidVersion(self, invalid_version: str) -> None:
+        with self.assertRaises(ValueError):
+            self.session.add(
+                Extension(get_random_extension_id(), invalid_version)
+            )
+
+    def assertInvalidVersions(self, invalid_version_list: List[str]) -> None:
+        for invalid_version in invalid_version_list:
+            self.assertInvalidVersion(invalid_version)
 
     def assertInvalidDownloadCount(self, invalid_download_count: int) -> None:
         with self.assertRaises(ValueError):
@@ -80,8 +92,10 @@ class TestExtension(BaseModelTestCase, TestCase):
             # Complete constructor
             for _ in range(TEST_RECORDS_AMOUNT):
                 random_id = get_random_extension_id()
+                random_version = get_random_extension_version()
                 test_extension = Extension(
                     id=random_id,
+                    version=random_version,
                     name="test_name",
                     developer_name="test_developer",
                     category_id=test_category.id,
@@ -90,7 +104,6 @@ class TestExtension(BaseModelTestCase, TestCase):
                     rating_average=random.random() * 5,
                     manifest=read_json_sample("test_manifest.json"),
                     byte_size=random.randint(0, 100000),
-                    latest_version="0.1.2.34",
                     updated_at=date.today(),
                     download_date=date.today()
                 )
@@ -100,17 +113,27 @@ class TestExtension(BaseModelTestCase, TestCase):
             # Partial constructor
             for _ in range(TEST_RECORDS_AMOUNT):
                 random_id = get_random_extension_id()
-                test_extension = Extension(random_id, test_category)
+                random_version = get_random_extension_version()
+                test_extension = Extension(random_id, random_version, test_category)
+                self.session.add(test_extension)
+                expected.append(test_extension)
+
+            # Same id and different version
+            random_id = get_random_extension_id()
+            for _ in range(TEST_RECORDS_AMOUNT):
+                random_version = get_random_extension_version()
+                test_extension = Extension(random_id, random_version, test_category)
                 self.session.add(test_extension)
                 expected.append(test_extension)
 
         result = self.session.query(Extension).all()
         self.assertEqual(result, expected)
-        self.assertEqual(len(result), TEST_RECORDS_AMOUNT * 2)
+        self.assertEqual(len(result), TEST_RECORDS_AMOUNT * 3)
 
     def test_update(self):
         original_id = get_random_extension_id()
-        test_extension = Extension(original_id)
+        original_version = get_random_extension_version()
+        test_extension = Extension(original_id, original_version)
         self.session.add(test_extension)
         self.session.commit()
 
@@ -126,7 +149,8 @@ class TestExtension(BaseModelTestCase, TestCase):
         self.assertEqual(inserted_extension.id, updated_extension.id)
 
     def test_deletion(self):
-        test_extension = Extension(get_random_extension_id())
+        test_extension = Extension(id=get_random_extension_id(),
+                                   version=get_random_extension_version())
         self.session.add(test_extension)
         self.session.commit()
 
@@ -137,34 +161,39 @@ class TestExtension(BaseModelTestCase, TestCase):
         self.session.commit()
         self.assertNoResults()
 
-    # TODO: 测试是否是benchmark，更新会不会导致问题
     def test_insertion_update(self):
-        # Same extension id, and update the version
+        # Same extension id and version, and update the name
         original_id = get_random_extension_id()
-        original_version = "1.0.1"
+        original_version = get_random_extension_version()
+        original_name = "test_extension"
         original_extension = Extension(
-            extension_id=original_id,
-            latest_version=original_version
+            id=original_id,
+            version=original_version,
+            name=original_name
         )
         self.session.merge(original_extension)
         self.session.commit()
 
         inserted_extension = self.session.query(Extension).first()
         self.assertEqual(inserted_extension.id, original_id)
-        self.assertEqual(inserted_extension.latest_version, original_version)
+        self.assertEqual(inserted_extension.version, original_version)
+        self.assertEqual(inserted_extension.name, original_name)
 
-        update_version = "1.0.2"
+        updated_name = "updated_extension"
         update_extension = Extension(
-            extension_id=original_id,
-            latest_version=update_version
+            id=original_id,
+            version=original_version,
+            name=updated_name
         )
         self.session.merge(update_extension)
         self.session.commit()
 
         updated_extension = self.session.query(Extension).first()
         self.assertEqual(updated_extension.id, original_id)
-        self.assertEqual(inserted_extension.latest_version,
-                         updated_extension.latest_version)
+        self.assertEqual(inserted_extension.version,
+                         updated_extension.version)
+        self.assertNotEqual(original_name,
+                            updated_extension.name)
         all_results = self.session.query(Extension).all()
         self.assertEqual(len(all_results), 1)
 
@@ -176,6 +205,14 @@ class TestExtension(BaseModelTestCase, TestCase):
         self.assertInvalidIds([too_short_id,
                                too_long_id,
                                invalid_character_id])
+
+        # Test invalid IDs
+        over_dots_version = "1..2"
+        none_number_version = "a.b.c"
+        empty_version = ""
+        self.assertInvalidVersions([over_dots_version,
+                                    none_number_version,
+                                    empty_version])
 
         # Test invalid download count
         self.assertInvalidDownloadCount(-1)

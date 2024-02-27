@@ -179,6 +179,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
     # TODO: 这里需不需要还是怎么更改位置
     def save_metadata(self):
+        # TODO: 对于version这里需要更改逻辑，如果没有则调用version_name
         extension = DatabaseHandle.store_extension(
             self.identifier, self.name, self.developer_name, self.category,
             self.user_count, self.rating_count, self.rating_average,

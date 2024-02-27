@@ -18,6 +18,7 @@ from extspider.common.context import DATA_PATH
 # TODO: 不是长久之计
 scraped_queue: Queue[str] = Queue()
 
+
 class Counter:
 
     def __init__(self, start_value: int = 0) -> None:
@@ -290,7 +291,6 @@ class DatabaseWorker(Worker):
                                 error: Exception,
                                 extension: BaseExtensionDetails) -> None:
         self.failed_extensions_queue.put((error, extension))
-
 
     def save_extension(self, extension: BaseExtensionDetails) -> bool:
         try:

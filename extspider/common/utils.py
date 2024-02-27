@@ -20,11 +20,15 @@ def is_valid_extension_id(identifier: str) -> bool:
     return bool(match)
 
 
+def is_valid_extension_version(version: str) -> bool:
+    pattern = re.compile(r'^(\d+\.)?(\d+\.)?(\d+)(\.\d+)*$')
+    return bool(pattern.match(version))
+
+
 def details_response_to_json_format(response_text: str) -> List:
     """Remove irrelevant content from the response and convert it
             into List type data using the JSON library."""
     details_match = re.findall(DETAILS_PATTERN, response_text)
-
     if details_match:
         details = json.loads(json.loads(details_match[0])[0][2])
         return details
@@ -65,3 +69,9 @@ def request_retry_with_backoff(max_retries=3, retry_interval=1):
 def get_random_extension_id() -> str:
     encoded_digits = string.ascii_lowercase[:16]
     return "".join(random.choice(encoded_digits) for _ in range(32))
+
+
+def get_random_extension_version():
+    num_parts = random.randint(1, 4)  # 这里我们限制了1到4部分
+    parts = [str(random.randint(0, 9999)) for _ in range(num_parts)]
+    return '.'.join(parts)

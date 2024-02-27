@@ -19,15 +19,12 @@ class TestChromeProgressSaver(unittest.TestCase):
         scraped_categories = ["category1", "category2"]
         now_category = "test_category"
         token = "test_token"
-        break_reason = "test_reason"
 
         # Save progress
-        self.progress_saver.save_progress(
-            status=ProgressStatus.UNCOMPLETED.value,
+        self.progress_saver.save_uncompleted_progress(
             scraped_categories=scraped_categories,
             now_category=now_category,
-            token=token,
-            break_reason=break_reason
+            token=token
         )
 
         # Load progress
@@ -39,14 +36,12 @@ class TestChromeProgressSaver(unittest.TestCase):
         self.assertEqual(loaded_progress.get("scraped_categories"), scraped_categories)
         self.assertEqual(loaded_progress.get("now_category"), now_category)
         self.assertEqual(loaded_progress.get("token"), token)
-        self.assertEqual(loaded_progress.get("break_reason"), break_reason)
-
         # Test is_finished
         is_finished = self.progress_saver.is_finished
         self.assertFalse(is_finished)
 
         # Save completed progress
-        self.progress_saver.save_progress(status=ProgressStatus.COMPLETED.value)
+        self.progress_saver.save_completed_progress()
 
         # Load progress
         loaded_progress = self.progress_saver.progress_info
@@ -68,5 +63,5 @@ class TestChromeProgressSaver(unittest.TestCase):
         self.assertIsNone(loaded_progress)
 
         # Test is_finished
-        is_finished = self.progress_saver.is_finished
+        is_finished = self.bad_progress_saver.is_finished
         self.assertTrue(is_finished)

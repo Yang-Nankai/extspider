@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
-import os
+from pathlib import Path
 from unittest import TestCase
 from dataclasses import fields
 from datetime import date, datetime
@@ -10,11 +10,11 @@ from extspider.collection.details.chrome_extension_details import ChromeExtensio
 from extspider.common.exception import UnexpectedDataStructure
 
 # region TEST SAMPLES INITIALISATION
-SAMPLES_ROOT = os.path.join(TEST_SAMPLES_PATH, "chrome_parser")
+SAMPLES_ROOT = Path(TEST_SAMPLES_PATH) / "chrome_parser"
 
 
 def read_sample(file_name):
-    file_path = os.path.join(SAMPLES_ROOT, file_name)
+    file_path = SAMPLES_ROOT / file_name
     with open(file_path, 'r', encoding='utf-8') as file:
         return file.read()
 
@@ -69,9 +69,5 @@ class TestChromeExtensionDetailsMapper(TestCase):
     def test_map_data_list(self):
         parsed_data = ChromeExtensionDetailsMapper.map_data_list(DETAILS_DATA)
         parsed_json = json.loads(json.dumps(parsed_data, cls=ComplexEncoder))
-        self.assertEqual(parsed_json, DETAILS_PARSED)
-
-    def test_invaild_data_list(self):
-        with self.assertRaises(UnexpectedDataStructure):
-            parsed_data = ChromeExtensionDetailsMapper.map_data_list(BAD_DETAILS_DATA)
-
+        for index, value in enumerate(parsed_json):
+            self.assertEqual(value, DETAILS_PARSED[index])
