@@ -80,6 +80,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
                 # TODO: load_manifest，这里是不是不应该出现，代码是否复杂，需要review
                 self.load_manifest(download_path)
         except MaxRequestRetryError as e:
+            # TODO: 这里需要日志记录
             print(f"Failed to download {self.identifier}: {str(e)}")
 
         return Path(download_path).exists()

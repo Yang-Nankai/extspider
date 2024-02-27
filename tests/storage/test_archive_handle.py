@@ -2,8 +2,8 @@ import shutil
 import os
 from zipfile import ZipFile
 from unittest import TestCase
-from extspider.storage.archive_handle import (ArchiveHandle,
-                                              EXTENSIONS_DIRECTORY_PATH)
+from extspider.storage.extension_handle import (ExtensionHandle,
+                                                EXTENSIONS_DIRECTORY_PATH)
 from extspider.storage.database_handle import DatabaseHandle
 from extspider.common.context import TEST_SAMPLES_PATH
 
@@ -80,7 +80,7 @@ class TestArchiveHandle(TestCase):
     def test_empty_setup(self):
         self.assertFalse(os.path.exists(EXTENSIONS_DIRECTORY_PATH))
 
-        ArchiveHandle.setup()
+        ExtensionHandle.setup()
         self.assertTrue(os.path.exists(EXTENSIONS_DIRECTORY_PATH))
         self.assertTrue(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
 
@@ -89,7 +89,7 @@ class TestArchiveHandle(TestCase):
         self.assertTrue(os.path.isdir(sample_directory_path))
         self.assertFalse(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
 
-        ArchiveHandle.setup(sample_directory_path)
+        ExtensionHandle.setup(sample_directory_path)
         self.assertTrue(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
 
         # Ensure files can be written through the logical link
@@ -104,7 +104,7 @@ class TestArchiveHandle(TestCase):
                                             "sample_extension",
                                             "manifest.json")
         self.assertTrue(os.path.isfile(sample_manifest_path))
-        detected_version = ArchiveHandle.get_version_from_manifest(
+        detected_version = ExtensionHandle.get_version_from_manifest(
             sample_manifest_path
         )
         self.assertEqual(detected_version, "3.2")

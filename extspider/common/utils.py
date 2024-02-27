@@ -57,7 +57,9 @@ def request_retry_with_backoff(max_retries=3, retry_interval=1):
                 time.sleep(retry_interval)
 
             if not result:
-                raise MaxRequestRetryError
+                raise MaxRequestRetryError(
+                    f"Retry request more than {max_retries} times."
+                )
 
             return result
 

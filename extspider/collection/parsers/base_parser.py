@@ -54,6 +54,8 @@ class DataMapper(AbstractClass):
     def __init__(self, raw_data: Iterable):
         self.raw_data = list(raw_data)
         if not self.is_data_structure_valid():
+            # TODO: 这里的异常需要考虑
+            # Raise Unexpected Structure
             pass
 
     def is_data_structure_valid(self) -> bool:
@@ -117,7 +119,10 @@ class DataMapper(AbstractClass):
         Transforms a data element given its value and attribute name.
         """
         transformer = self.DATA_TRANSFORMERS.get(attribute_name)
-        if transformer is None or value is None:
+        # TODO: 需要考虑并cleanup!
+        # if transformer is None or value is None:
+        #     return value
+        if transformer is None:
             return value
         return transformer(value)
 

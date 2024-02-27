@@ -8,7 +8,7 @@ from typing import Any, List, Optional, Union, Iterator, Self
 from queue import Queue, Empty as EmptyQueue
 from threading import Event, Lock
 from extspider.common.configuration import BACKLOG_LIMIT
-from extspider.storage.archive_handle import ArchiveHandle
+from extspider.storage.extension_handle import ExtensionHandle
 from extspider.storage.crx_archive import CrxArchive
 from extspider.collection.details.base_extension_details import BaseExtensionDetails
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
@@ -107,16 +107,14 @@ class Worker(AbstractClass):
 class CollectorWorker(Worker):
     class_name = "collector_worker"
 
-    # collect_queue: Queue[str] = Queue()
-    collect_queue = scraped_queue
+    collect_queue: Queue[str] = Queue()
     collected_details_count = Counter()
     downloaded_count = Counter()
-    finished_queue: Queue[Union[BaseExtensionDetails, CrxArchive]] = Queue()
+    # TODO: 这里对于finished_queue表示存疑
+    finished_queue: Queue[BaseExtensionDetails] = Queue()
 
     failed_details_queue: Queue[tuple[Exception, BaseExtensionDetails]] = Queue()
-    failed_details_count = Counter()
     failed_downloads_queue: Queue[tuple[Exception, BaseExtensionDetails]] = Queue()
-    failed_storage_queue: Queue[tuple[Exception, str]] = Queue()
 
     finished_event = Event()
 
@@ -137,11 +135,6 @@ class CollectorWorker(Worker):
                                extension: BaseExtensionDetails) -> None:
         self.failed_downloads_queue.put((error, extension))
 
-    def enqueue_storage_error(self,
-                              error: Exception,
-                              extension_id: str) -> None:
-        self.failed_storage_queue.put((error, extension_id))
-
     def collect_details(self,
                         extension: BaseExtensionDetails) -> bool:
         """
@@ -158,44 +151,19 @@ class CollectorWorker(Worker):
             extension.update_details()
             # TODO: 这里需要review，将id+version作为唯一标识写入
             #  以 {"extension_id" : "version"}写入?
-            # extension.write_unique_data()
 
         except Exception as error:
-            # TODO: 这里报错存在问题，需要去解决以及测试
             self.log(
                 f"Encountered {type(error).__name__} upon "
                 f"collecting {extension.identifier}",
                 logging.ERROR
             )
-            self.enqueue_collection_error(error, extension)
+            self.enqueue_collection_error(error, extension.identifier)
             traceback.print_exc()
             return False
         else:
-            # print(f"Successfully collected {repr(extension.identifier)}")
-            self.log(f"collected {repr(extension)}", logging.DEBUG)
+            self.log(f"Successfully collected {extension.identifier}", logging.DEBUG)
             self.finished_queue.put(extension)
-
-        return True
-
-    def store_extension_archive(self,
-                                extension_id: str,
-                                download_path: Optional[str]) -> bool:
-
-        # this is a new release; store on disk and add to database
-        self.log(f"Storing {extension_id}...", logging.DEBUG)
-        try:
-            archive = ArchiveHandle.store_extension_archive(extension_id,
-                                                            download_path)
-
-        except Exception as error:
-            self.log(f"Encountered {type(error).__name__} "
-                     f"upon storing {extension_id}", logging.ERROR)
-            self.enqueue_storage_error(error, extension_id)
-            traceback.print_exc()
-            return False
-
-        else:
-            self.finished_queue.put(archive)
 
         return True
 
@@ -209,15 +177,13 @@ class CollectorWorker(Worker):
         Returns:
             bool: True if download was successful, False otherwise
         """
-        # self.log(f"Downloading {extension.identifier}", logging.DEBUG)
 
         try:
-            download_path = ArchiveHandle.get_extension_storage_path(
+            download_path = ExtensionHandle.get_extension_storage_path(
                 extension.identifier,
                 extension.version
             )
             extension.download(download_path)
-            return True
 
         except Exception as error:
             self.log(
@@ -228,6 +194,10 @@ class CollectorWorker(Worker):
             self.enqueue_download_error(error, extension)
             traceback.print_exc()
             return False
+        else:
+            self.log(f"Successfully downloaded {repr(extension)}", logging.DEBUG)
+
+        return True
 
     def work(self,
              extension: BaseExtensionDetails) -> None:
@@ -240,9 +210,7 @@ class CollectorWorker(Worker):
             self.downloaded_count.increment()
 
     def run(self) -> int:
-        print("Collector Started...")
-        # TODO: 这里需要更改
-        # self.set_up()
+        self.log(f"{self.name} is ready and run...", logging.INFO)
         while not self.is_exit_condition_reached:
             try:
                 extension_id = self.collect_queue.get(timeout=10)
@@ -253,20 +221,15 @@ class CollectorWorker(Worker):
                 continue
 
             except Exception as error:
-                self.failed_details_queue.put([extension_id,
-                                               type(error).__name__, str(error)
-                                               ])
-                self.log(f"Collection error for {extension_id}"
-                         f"{type(error).__name__}: {error}")
-                self.enqueue_collection_error(error, extension_id)
                 self.log(f"{type(error).__name__}: {error}", logging.ERROR)
                 traceback.print_exc()
+
             finally:
-                # DatabaseWorker.storage_queue.put(extension)
                 self.collect_queue.task_done()
 
         self.log("Finished", logging.INFO)
         self.finished_event.set()
+
         return self.worker_number
 
 
@@ -348,7 +311,6 @@ class ProgressTrackerWorker(Worker):
 
     failed_details_collections = CollectorWorker.failed_details_queue
     failed_extension_downloads = CollectorWorker.failed_downloads_queue
-    failed_archive_extractions = CollectorWorker.failed_storage_queue
     failed_extension_saves = DatabaseWorker.failed_extensions_queue
     # failed_archive_saves = DatabaseWorker.failed_archives_queue
 

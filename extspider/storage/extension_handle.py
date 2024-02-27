@@ -25,9 +25,9 @@ EXTENSIONS_DIRECTORY_PATH = os.path.join(STORAGE_PATH,
                                          EXTENSIONS_DIRECTORY_NAME)
 
 
-class ArchiveHandle:
+class ExtensionHandle:
     """
-    ArchiveHandle abstraction layer to download and manage extension archives
+    ExtensionHandle abstraction layer to download and manage extension archives
     in the file system
     """
 

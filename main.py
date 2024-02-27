@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 from tests.collection.category.test_chrome_category_scraper import TestChromeCategoryScraper
-from extspider.storage.archive_handle import ArchiveHandle
+from extspider.storage.extension_handle import ExtensionHandle
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
 from extspider.collection.category.chrome_category_scraper import ChromeCategoryScraper
 from extspider.collection.run import run

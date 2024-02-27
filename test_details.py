@@ -1,15 +1,19 @@
-import re
 
-def is_valid_extension_version(version: str) -> bool:
-    # 正则表达式匹配以点分隔的数字序列
-    pattern = re.compile(r'^(\d+\.)?(\d+\.)?(\d+)(\.\d+)*$')
-    return bool(pattern.match(version))
+def test1():
+    raise NotImplementedError("Test1: NotImplementedError")
 
-# 示例使用
-print(is_valid_extension_version("0.1.2"))        # 应该输出: True
-print(is_valid_extension_version("2025.12.32.123")) # 应该输出: True
-print(is_valid_extension_version("82.123"))        # 应该输出: True
-print(is_valid_extension_version("1..2"))          # 应该输出: False
-print(is_valid_extension_version("a.b.c"))         # 应该输出: False
-print(is_valid_extension_version("123"))           # 应该输出: True
-print(is_valid_extension_version(""))           # 应该输出: False
+def test2():
+    try:
+        test1()
+    except NotImplementedError as e:
+        print("Test2", str(e))
+
+    raise FileNotFoundError
+
+def test3():
+    try:
+        test2()
+    except Exception as e:
+        print("Test3", str(e))
+
+test3()

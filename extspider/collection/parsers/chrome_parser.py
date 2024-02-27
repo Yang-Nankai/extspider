@@ -5,6 +5,8 @@ from datetime import date, datetime
 from codecs import BOM_UTF8
 from typing import Callable, Optional
 from extspider.collection.parsers.base_parser import DataMapper
+from extspider.common.utils import is_valid_extension_id, is_valid_extension_version
+from extspider.common.exception import UnexpectedDataStructure
 
 
 class ChromeCategoryResponseMapper(DataMapper):
@@ -35,27 +37,55 @@ class ChromeExtensionDetailsMapper(DataMapper):
     @property
     def DATA_TRANSFORMERS(self) -> dict[str, Callable]:
         return {
+            "identifier": self.valid_identifier,
+            "version": self.valid_version,
             "manifest": self.parse_manifest,
             "byte_size": self.printable_bytes_to_int,
             "last_update": self.timestamp_to_date,
-            "version": self.valid_version
+            "rating_average": self.valid_float,
+            "user_count": self.valid_int,
+            "rating_count": self.valid_int
         }
 
     @staticmethod
-    def valid_version(version: Optional[str]) -> str:
-        if version is None:
-            return ""
+    def valid_identifier(identifier: str) -> str:
+        if not is_valid_extension_id(str(identifier)):
+            raise UnexpectedDataStructure("Cannot get the right identifier.")
+        return identifier
+
+    @staticmethod
+    def valid_version(version: str) -> str:
+        if not is_valid_extension_version(version):
+            raise UnexpectedDataStructure("Cannot get the right version.")
         return version
+
+    @staticmethod
+    def valid_float(f_num: float) -> float:
+        if f_num is None:
+            return 0
+        return round(float(f_num), 3)
+
+    @staticmethod
+    def valid_int(i_num: int) -> int:
+        if i_num is None:
+            return 0
+        return int(i_num)
 
     @staticmethod
     def timestamp_to_date(timestamp: str) -> date:
         """Converts a Unix timestamp to a date object."""
+        if timestamp is None:
+            return None
+
         datetime_obj = datetime.utcfromtimestamp(int(timestamp))
         converted_date = datetime_obj.date()
         return converted_date
 
     @staticmethod
     def printable_bytes_to_int(printable_size: str) -> int:
+        if printable_size is None:
+            return None
+
         unit_conversion = {
             "KiB": 1024,
             "MiB": 1024 ** 2,
@@ -71,6 +101,9 @@ class ChromeExtensionDetailsMapper(DataMapper):
         such as commented sequences, unescaped control characters,
         Byte Order Mark (BOM), etc.
         """
+        if json_string is None:
+            return None
+
         # Remove commented sequences
         json_string = re.sub(r'\n\s*//.*', '', json_string, flags=re.MULTILINE)
         # TODO: 对于这里JSON格式需要进一步的查看，这里存在bug

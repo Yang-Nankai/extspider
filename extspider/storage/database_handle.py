@@ -63,13 +63,19 @@ class DatabaseHandle:
     @classmethod
     def get_or_create_extension(cls,
                                 session: ScopedSession,
-                                extension_id: str) -> Extension:
+                                extension_id: str,
+                                extension_version: str) -> Extension:
         extension = session.query(
             Extension
-        ).where(Extension.id == extension_id).first()
+        ).where(
+            and_(
+                Extension.id == extension_id,
+                Extension.version == extension_version
+            )
+        ).first()
 
         if extension is None:
-            extension = Extension(extension_id)
+            extension = Extension(extension_id, extension_version)
             session.add(extension)
             session.commit()
 
@@ -96,6 +102,7 @@ class DatabaseHandle:
     @classmethod
     def store_extension(cls,
                         extension_id: str,
+                        extension_version: str,
                         name: Optional[str],
                         developer_name: Optional[str],
                         category_name: Optional[str],
@@ -104,7 +111,6 @@ class DatabaseHandle:
                         rating_average: Optional[float],
                         manifest: Optional[Dict],
                         byte_size: Optional[int],
-                        latest_version: Optional[str],
                         updated_at: Optional[date]) -> Extension:
         with cls.get_session() as session:
             category_id = None
@@ -115,6 +121,7 @@ class DatabaseHandle:
                 )
                 category_id = category.id
             extension = Extension(id=extension_id,
+                                  version=extension_version,
                                   name=name,
                                   developer_name=developer_name,
                                   category_id=category_id,
@@ -123,7 +130,6 @@ class DatabaseHandle:
                                   rating_average=rating_average,
                                   manifest=manifest,
                                   byte_size=byte_size,
-                                  latest_version=latest_version,
                                   updated_at=updated_at)
 
             session.merge(extension)

@@ -12,6 +12,9 @@ DATABASE_PATH = os.path.join(DB_PATH, DATABASE_NAME)
 
 class TestDatabaseHandle(TestCase):
 
+    def setUp(self) -> None:
+        DatabaseHandle.setup_engine(DATABASE_PATH)
+
     def tearDown(self) -> None:
         if DatabaseHandle.engine is not None:
             DatabaseHandle.Session.remove()
@@ -21,15 +24,11 @@ class TestDatabaseHandle(TestCase):
         if os.path.isfile(DATABASE_PATH):
             os.remove(DATABASE_PATH)
 
-    def setUp(self) -> None:
-        DatabaseHandle.setup_engine(DATABASE_PATH)
-
     def test_setup_engine(self):
         self.assertTrue(os.path.isfile(DATABASE_PATH))
 
     def test_get_session(self):
         session = DatabaseHandle.get_session()
-
         self.assertIsNotNone(session)
 
     def test_erase(self):
@@ -41,7 +40,7 @@ class TestDatabaseHandle(TestCase):
         session = DatabaseHandle.get_session()
 
         created_extension = DatabaseHandle.get_or_create_extension(
-            session, "a" * 32
+            session, "a" * 32, "1.0.0"
         )
         session.commit()
 
@@ -49,7 +48,7 @@ class TestDatabaseHandle(TestCase):
         self.assertEqual(result, [created_extension])
 
         gotten_extension = DatabaseHandle.get_or_create_extension(
-            session, "a" * 32
+            session, "a" * 32, "1.0.0"
         )
         session.commit()
 
@@ -84,6 +83,7 @@ class TestDatabaseHandle(TestCase):
     def test_store_extension(self):
         test_arguments = {
             "id": "a" * 32,
+            "version": "1.0.0",
             "name": "Test Extension Name",
             "developer_name": "Test Developer Name",
             "category_name": "test_category",
@@ -92,12 +92,12 @@ class TestDatabaseHandle(TestCase):
             "rating_average": 3.8,
             "manifest": {"manifest_version": 3, "permissions": ["tabs"]},
             "byte_size": 10000,
-            "latest_version": "1.0.2",
             "updated_at": date.today(),
             "download_date": date.today()
         }
         stored_extension = DatabaseHandle.store_extension(
             test_arguments["id"],
+            test_arguments["version"],
             test_arguments["name"],
             test_arguments["developer_name"],
             test_arguments["category_name"],
@@ -106,7 +106,6 @@ class TestDatabaseHandle(TestCase):
             test_arguments["rating_average"],
             test_arguments["manifest"],
             test_arguments["byte_size"],
-            test_arguments["latest_version"],
             test_arguments["updated_at"],
         )
         with DatabaseHandle.get_session() as session:
@@ -126,38 +125,23 @@ class TestDatabaseHandle(TestCase):
                          test_arguments["rating_count"])
         self.assertEqual(stored_extension.rating_average,
                          test_arguments["rating_average"])
-        self.assertEqual(stored_extension.latest_version,
-                         test_arguments["latest_version"])
+        self.assertEqual(stored_extension.version,
+                         test_arguments["version"])
 
         with DatabaseHandle.get_session() as session:
             selected_extension = DatabaseHandle.get_or_create_extension(
-                session, test_arguments["id"]
+                session, test_arguments["id"], test_arguments["version"]
             )
 
         self.assertEqual(selected_extension.id, stored_extension.id)
 
-        stored_extension_permission = DatabaseHandle.store_extension_permission(
-            stored_extension
-        )
-        self.assertEqual(stored_extension_permission.extension_id,
-                         test_arguments["id"])
-        self.assertEqual(stored_extension_permission.extension_version,
-                         test_arguments["latest_version"])
-        self.assertEqual(stored_extension_permission.manifest_version,
-                         stored_extension.manifest_version)
-        self.assertEqual(stored_extension_permission.permissions,
-                         stored_extension.manifest_permissions)
-        self.assertIsNone(stored_extension_permission.optional_permissions,)
-        self.assertIsNone(stored_extension_permission.content_scripts_matches)
-        self.assertIsNone(stored_extension_permission.host_permissions)
-        self.assertIsNone(stored_extension_permission.optional_host_permissions)
-
-        with DatabaseHandle.get_session() as session:
-            selected_extension_permission = DatabaseHandle.get_or_create_extension_permission(
-                session, test_arguments["id"], test_arguments["latest_version"]
-            )
-
-        self.assertEqual(selected_extension_permission.extension_id,
-                         stored_extension_permission.extension_id)
+        self.assertEqual(stored_extension.manifest_version,
+                         test_arguments["manifest"].get("manifest_version"))
+        self.assertEqual(stored_extension.manifest_permissions,
+                         test_arguments["manifest"].get("permissions"))
+        self.assertIsNone(stored_extension.manifest_optional_permissions,)
+        self.assertIsNone(stored_extension.manifest_content_scripts_matches)
+        self.assertIsNone(stored_extension.manifest_host_permissions)
+        self.assertIsNone(stored_extension.manifest_optional_host_permissions)
 
 
