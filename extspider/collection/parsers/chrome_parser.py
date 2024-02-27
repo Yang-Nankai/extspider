@@ -53,10 +53,14 @@ class ChromeExtensionDetailsMapper(DataMapper):
             raise UnexpectedDataStructure("Cannot get the right identifier.")
         return identifier
 
-    @staticmethod
-    def valid_version(version: str) -> str:
+    def valid_version(self, version: str) -> str:
+        if not is_valid_extension_version(version):
+            manifest_data = self.get_data("manifest")
+            version = manifest_data.get("version")
+
         if not is_valid_extension_version(version):
             raise UnexpectedDataStructure("Cannot get the right version.")
+
         return version
 
     @staticmethod

@@ -20,5 +20,10 @@ scraper_parameters:
   chrome_detail_request_id: xY2Ddd
   # Once request extension details number
   chrome_scraper_once_num: 128
+  # Proxies
+  proxies: {
+     "http": "http://127.0.0.1:15777"
+  }
 
-# TODO: storage_path 没有 archive_handle中
+feishu_parameters:
+  webhook_url: https://open.feishu.cn/open-apis/bot/v2/hook/a3c4f648-a30a-4dc2-b724-d705c8d2be81

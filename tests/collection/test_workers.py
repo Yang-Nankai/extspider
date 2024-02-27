@@ -34,8 +34,8 @@ class TestCollectorWorker(TestCase):
     def setUp(self) -> None:
         self.collector_worker = CollectorWorker()
         self.extension_ids = [
-            "aoogfbnigmjindidkbijnkccpdloijfg",
-            "apebhplgeobjibklnjlmjmdhfolminmh"
+            "eiaekkbkomopkiidlmeabjpjldhbikfc",
+            "gaoijlmokigkaaocblpcmlifgipojeip"
         ]
 
     def test_put_queue(self):
@@ -120,6 +120,7 @@ class TestCollectorWorker(TestCase):
         )
         self.assertFalse(Path(download_path).is_file())
 
+
 @skip
 class TestDatabaseWorker(TestCase):
 
@@ -135,6 +136,7 @@ class TestDatabaseWorker(TestCase):
 
         if Path(DATABASE_PATH).is_file():
             Path(DATABASE_PATH).unlink()
+
     def test_save_extension(self):
         extension = ChromeExtensionDetails("mffednhfmeflihkcikanfhpnincpkejc")
         extension.update_details()
@@ -146,7 +148,3 @@ class TestDatabaseWorker(TestCase):
         )
         self.assertIsNotNone(original_extension)
         self.assertIsNotNone(original_extension.name)
-
-
-class TestProgressTrackerWorker(TestCase):
-    pass

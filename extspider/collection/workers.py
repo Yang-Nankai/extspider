@@ -15,9 +15,6 @@ from extspider.collection.details.chrome_extension_details import ChromeExtensio
 from extspider.common.log import get_logger, FeishuMessenger
 from extspider.common.context import DATA_PATH
 
-# TODO: 不是长久之计
-scraped_queue: Queue[str] = Queue()
-
 
 class Counter:
 
@@ -299,7 +296,6 @@ class ProgressTrackerWorker(Worker):
     collected_details_count = CollectorWorker.collected_details_count
     downloaded_count = CollectorWorker.downloaded_count
     saved_extensions_count = DatabaseWorker.saved_extensions_count
-    # saved_archives_count = DatabaseWorker.saved_archives_count
 
     collection_backlog = CollectorWorker.collect_queue
     database_backlog = DatabaseWorker.save_queue
@@ -307,17 +303,14 @@ class ProgressTrackerWorker(Worker):
     failed_details_collections = CollectorWorker.failed_details_queue
     failed_extension_downloads = CollectorWorker.failed_downloads_queue
     failed_extension_saves = DatabaseWorker.failed_extensions_queue
-    # failed_archive_saves = DatabaseWorker.failed_archives_queue
 
     finished_event = Event()
 
     def __init__(self, update_seconds: int = 10, enable_feishu: bool = False) -> None:
         super().__init__()
         self.update_seconds = update_seconds
-        # self.is_telegram_enabled = enable_telegram
         self.is_feishu_enabled = enable_feishu
 
-        # TODO: 消息模块
         if self.is_feishu_enabled:
             self.messenger = FeishuMessenger()
         else:
@@ -338,14 +331,6 @@ class ProgressTrackerWorker(Worker):
         delta = timedelta(seconds=self.elapsed_seconds)
         return str(delta).split(".")[0]  # removing microseconds
 
-    # @property
-    # def archives_per_second(self) -> Optional[float]:
-    #     try:
-    #         ratio = self.elapsed_seconds / self.saved_archives_count.count
-    #     except ZeroDivisionError:
-    #         return None
-    #     return round(ratio, 2)
-
     @property
     def progress_status(self) -> str:
         if not self.is_exit_condition_reached:
@@ -356,26 +341,23 @@ class ProgressTrackerWorker(Worker):
     @property
     def overall_status(self) -> str:
         return (
-            f"-- Scraping {self.progress_status} --\n"
-            f"Scraped extension details: {self.collected_details_count}\n"
-            f"Saved extension metadata: {self.saved_extensions_count}\n"
-            f"Downloaded crx files: {self.downloaded_count}\n"
-            "-- Backlog --\n"
-            f"Backlog limit: {BACKLOG_LIMIT}\n"
-            f"Collection backlog: {self.collection_backlog.qsize()}\n"
-            f"Database backlog: {self.database_backlog.qsize()}\n"
-            "-- Failures --\n"
-            f"Details collection: {self.failed_details_collections.qsize()}\n"
-            f"Extension download: {self.failed_extension_downloads.qsize()}\n"
-            f"Extension metadata save: {self.failed_extension_saves.qsize()}\n"
-            f"-- Runtime metrics --\n"
-            f"Elapsed time: {self.elapsed_time_printable}\n"
-            # f"Average scrape-to-save time: {self.archives_per_second} seconds"
+            f"[Status]: {self.progress_status}\n"
+            f"[ScrapedExtensionDetails]: {self.collected_details_count}\n"
+            f"[SavedExtensionMetadata]: {self.saved_extensions_count}\n"
+            f"[DownloadedExtensionCrx]: {self.downloaded_count}\n"
+            "- Backlog\n"
+            f"[BacklogLimit]: {BACKLOG_LIMIT}\n"
+            f"[CollectionBacklog]: {self.collection_backlog.qsize()}\n"
+            f"[DatabaseBacklog]: {self.database_backlog.qsize()}\n"
+            "- Failures\n"
+            f"[DetailsCollection]: {self.failed_details_collections.qsize()}\n"
+            f"[ExtensionDownload]: {self.failed_extension_downloads.qsize()}\n"
+            f"[ExtensionMetadataSave]: {self.failed_extension_saves.qsize()}\n"
+            f"- Runtime metrics\n"
+            f"[ElapsedTime]: {self.elapsed_time_printable}\n"
         )
 
     def send_status_update(self) -> None:
-        # print(self.elapsed_time_printable)
-        # print(self.archives_per_second)
         status = self.overall_status
         print(status)
 
@@ -390,7 +372,7 @@ class ProgressTrackerWorker(Worker):
 
     def run(self) -> None:
         self.start_time = time.time()
-        self.log("Ready", logging.INFO)
+        self.log(f"{self.name} is ready and run...", logging.INFO)
         while not self.is_exit_condition_reached:
             try:
                 self.work()
@@ -403,14 +385,3 @@ class ProgressTrackerWorker(Worker):
         self.send_status_update()
         self.log("Finished", logging.INFO)
 
-
-# TODO: 这里需要更改逻辑
-def set_up() -> None:
-    """
-    Import all crawled extension ids into the queue
-    """
-    extension_ids_path = f'{DATA_PATH}/extension_ids.txt'
-
-    with open(extension_ids_path, 'r') as file:
-        for line in file:
-            scraped_queue.put(line.strip())

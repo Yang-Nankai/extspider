@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from unittest import TestCase
+from unittest import TestCase, skipUnless
 import logging
 import os
-
+from extspider.common.configuration import IS_FEISHU_ENABLED
 from extspider.common import log
 
 
@@ -24,8 +24,6 @@ class TestLogging(TestCase):
         Returns:
             str: logs generated while running the test suite
         """
-
-        content = None
         with open(log.LOG_FILE_PATH, "r", encoding="utf-8") as log_file:
             content = log_file.read()
 
@@ -128,6 +126,7 @@ class TestLogging(TestCase):
         return_line = logged_lines[1].split(" - ")
         self.assertEqual(return_line[-1], expected_output_log)
 
+    @skipUnless(IS_FEISHU_ENABLED, "Test feishu send")
     def test_feishu_message(self):
         message = log.FeishuMessenger()
         is_send = message.send_message("Test")

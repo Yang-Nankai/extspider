@@ -19,8 +19,8 @@ from extspider.common.configuration import PROD_VERSION
 from extspider.storage.database_handle import DatabaseHandle
 from extspider.common.utils import request_retry_with_backoff, details_response_to_json_format
 from extspider.common.configuration import (CHROME_DETAIL_REQUEST_ID,
-                                            PROXIES, HTTP_HEADERS)
-from extspider.common.context import DATA_PATH
+                                            PROXIES)
+from extspider.common.context import DATA_PATH, HTTP_HEADERS
 
 requests.packages.urllib3.disable_warnings()
 

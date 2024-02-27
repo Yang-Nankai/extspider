@@ -10,7 +10,10 @@ import html
 import unittest
 from socket import socket
 from typing import Callable
-from extspider.common.configuration import LOG_PATH
+from extspider.common.configuration import (LOG_PATH, FEISHU_WEBHOOK_URL,
+                                            IS_FEISHU_ENABLED)
+from extspider.common.utils import request_retry_with_backoff
+from extspider.common.exception import MaxRequestRetryError
 
 # Use project root as destination folder for log file
 LOG_FILE_NAME = "runtime.log"
@@ -111,17 +114,14 @@ def skip_unless_internet_connected(func):
     return wrapper
 
 
-# endregion
-
-
 class FeishuMessenger:
-    # TODO: 在配置中设置
-    WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/a3c4f648-a30a-4dc2-b724-d705c8d2be81"
     HEADERS = {"Content-Type": "application/json"}
 
+    @request_retry_with_backoff(max_retries=3, retry_interval=1)
     def send_message(self, message_content: str) -> bool:
-        # TODO: 配置中还要设置
-        # if not IS_TELEGRAM_ENABLED:
+        if not IS_FEISHU_ENABLED:
+            return
+
         payload = {
             "msg_type": "text",
             "content": {
@@ -129,11 +129,13 @@ class FeishuMessenger:
             }
         }
 
-        response = requests.post(self.WEBHOOK_URL,
-                                 headers=self.HEADERS,
-                                 data=json.dumps(payload))
-        if response.status_code != 200:
-            print("Feishu Response Status Code: ", response.status_code)
+        try:
+            response = requests.post(FEISHU_WEBHOOK_URL,
+                                     headers=self.HEADERS,
+                                     data=json.dumps(payload))
+            response.raise_for_status()
+        except MaxRequestRetryError as e:
+            print(f"Failed to senf feishu message: {str(e)}")
             return False
 
         return True

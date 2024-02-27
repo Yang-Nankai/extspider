@@ -57,14 +57,16 @@ class ScraperConfiguration:
 
     def setup(self) -> dict:
         # TODO: include configuration files in docker bind path
-        if os.getenv("DOCKER_BIND_PATH") is not None:
-            self.set("data_path", os.getenv("DOCKER_BIND_PATH"))
-            self.set("storage_path", os.getenv("DOCKER_BIND_PATH"))
-            self.set("log_path", os.getenv("DOCKER_BIND_PATH"))
+        self.set("db_path", context.DATA_PATH)
+        self.set("storage_path", context.DATA_PATH)
+        self.set("log_path", context.PROJECT_ROOT)
+
+        feishu_parameters = self.configuration.get("feishu_parameters")
+        if (feishu_parameters is not None
+                and feishu_parameters.get("webhook_url") is not None):
+            self.set("is_feishu_enabled", True)
         else:
-            self.set("db_path", context.DATA_PATH)
-            self.set("storage_path", context.DATA_PATH)
-            self.set("log_path", context.PROJECT_ROOT)
+            self.set("is_feishu_enabled", False)
 
         return self.configuration
 
@@ -87,21 +89,11 @@ CHROME_CATEGORY_REQUEST_ID = CONFIGURATION["scraper_parameters"]["chrome_categor
 CHROME_DETAIL_REQUEST_ID = CONFIGURATION["scraper_parameters"]["chrome_detail_request_id"]
 CHROME_SCRAPER_ONCE_NUM = CONFIGURATION["scraper_parameters"]["chrome_scraper_once_num"]
 
-# TODO: 这里肯定是要离开的，全部放到yaml模块或者单独设置一个请求模块中，
-#  HTTP_HEADERS没有必要改变，但是PROXIES一定要放到configuration.yaml文件中
-# Request
-HTTP_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        "AppleWebKit/537.36 (KHTML, like Gecko)"
-        "Chrome/118.0.5993.90"
-    ),
-    "Host": "chromewebstore.google.com",
-    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-}
+# Proxy
+PROXIES = CONFIGURATION["scraper_parameters"]["proxies"]
 
-# 设置代理
-PROXIES = {
-    "http": "http://127.0.0.1:15777"
-}
-# TODO: 添加飞书提示模块
+# Feishu
+FEISHU_WEBHOOK_URL = None
+IS_FEISHU_ENABLED = CONFIGURATION["is_feishu_enabled"]
+if IS_FEISHU_ENABLED:
+    FEISHU_WEBHOOK_URL = CONFIGURATION["feishu_parameters"]["webhook_url"]

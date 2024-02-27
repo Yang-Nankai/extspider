@@ -5,6 +5,7 @@ import string
 import requests
 import time
 import json
+from datetime import datetime
 from typing import List
 from extspider.common.exception import (InvalidDetailResponseFormat,
                                         MaxRequestRetryError)
@@ -77,3 +78,8 @@ def get_random_extension_version():
     num_parts = random.randint(1, 4)  # 这里我们限制了1到4部分
     parts = [str(random.randint(0, 9999)) for _ in range(num_parts)]
     return '.'.join(parts)
+
+
+def get_today_date_string():
+    today_date = datetime.today().strftime("%Y_%m_%d")
+    return today_date

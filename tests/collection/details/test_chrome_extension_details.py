@@ -3,7 +3,7 @@ from pathlib import Path
 from tests.collection.details.base_tests import BaseTests as BT
 from extspider.collection.details.chrome_extension_details import ChromeExtensionDetails
 from extspider.common.context import TEST_SAMPLES_PATH
-from extspider.common.exception import MaxRequestRetryError
+from extspider.common.exception import MaxRequestRetryError,UnexpectedDataStructure
 
 SAMPLES_ROOT = Path(TEST_SAMPLES_PATH) / "chrome_extension_details"
 TEST_DOWNLOAD_PATH = SAMPLES_ROOT / "test_extension.crx"
@@ -18,7 +18,7 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
         return ChromeExtensionDetails
 
     def setUp(self):
-        self.extension = ChromeExtensionDetails("pgcioedaijekepkjadkapaaaffjcekdf")
+        self.extension = ChromeExtensionDetails("mchkhbjkklkldgfkmdcnahgeekhpldae")
         self.bad_extension = ChromeExtensionDetails("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
     def test_get_extension_detail(self):
@@ -29,10 +29,11 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
         self.assertIsNotNone(processed_data[0])
 
         # Extension not exists
-        processed_data = self.bad_extension.get_extension_detail()
-        self.assertEqual(len(processed_data), 12)
-        for data in processed_data:
-            self.assertIsNone(data)
+        with self.assertRaises(UnexpectedDataStructure) as e:
+            processed_data = self.bad_extension.get_extension_detail()
+            self.assertEqual(len(processed_data), 12)
+            for data in processed_data:
+                self.assertIsNone(data)
 
         # TODO: 这里需要当连接不到谷歌服务器的时候响应，需要增加测试！！！
         # if internet_not_connected:

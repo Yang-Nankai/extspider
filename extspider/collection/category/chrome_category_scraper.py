@@ -4,7 +4,7 @@ import re
 import requests
 import sys
 from typing import Dict, List, Optional
-from extspider.common.context import DATA_PATH
+from extspider.common.context import DATA_PATH, DAILY_IDENTIFIERS_PATH, HTTP_HEADERS
 from extspider.collection.category.base_category_scraper import BaseCategoryScraper
 from extspider.common.exception import (MaxRequestRetryError,
                                         RequestError)
@@ -12,8 +12,7 @@ from extspider.collection.parsers.chrome_parser import ChromeCategoryResponseMap
 from extspider.collection.progress_saver import ChromeProgressSaver
 from extspider.common.utils import request_retry_with_backoff, details_response_to_json_format
 from extspider.common.configuration import (CHROME_CATEGORY_REQUEST_ID,
-                                            PROXIES, HTTP_HEADERS,
-                                            CHROME_SCRAPER_ONCE_NUM)
+                                            PROXIES, CHROME_SCRAPER_ONCE_NUM)
 from requests.exceptions import RequestException
 from extspider.common.log import get_logger
 from logging import Logger
@@ -40,8 +39,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         self.request_id = CHROME_CATEGORY_REQUEST_ID
         self.target_url = f"{BASE_REQUEST_URL}?rpcids={self.request_id}" \
                           f"&source-path={self.source_path}"
-        self.ids_writter = open(f"{DATA_PATH}/extension_ids.txt", "a", encoding='utf-8')
-        # TODO: 同时这里"extension_id":"verison" 这种结果需要放在detail代码中，并添加进度条的内容???
+        self.ids_writter = open(DAILY_IDENTIFIERS_PATH, "a", encoding='utf-8')
         # TODO: 日志处理这块，看完B站视频之后再处理
         # self.logger: Logger = get_logger("Chrome_category_scraper")
 

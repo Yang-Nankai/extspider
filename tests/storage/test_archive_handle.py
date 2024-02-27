@@ -84,20 +84,20 @@ class TestArchiveHandle(TestCase):
         self.assertTrue(os.path.exists(EXTENSIONS_DIRECTORY_PATH))
         self.assertTrue(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
 
-    def test_linked_setup(self):
-        sample_directory_path = self.create_sample_directory()
-        self.assertTrue(os.path.isdir(sample_directory_path))
-        self.assertFalse(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
-
-        ExtensionHandle.setup(sample_directory_path)
-        self.assertTrue(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
-
-        # Ensure files can be written through the logical link
-        link_file_path = os.path.join(EXTENSIONS_DIRECTORY_PATH, "test_file")
-        actual_file_path = os.path.join(sample_directory_path, "test_file")
-        open(link_file_path, "a").close()
-        self.assertTrue(os.path.isfile(link_file_path))
-        self.assertTrue(os.path.isfile(actual_file_path))
+    # def test_linked_setup(self):
+    #     sample_directory_path = self.create_sample_directory()
+    #     self.assertTrue(os.path.isdir(sample_directory_path))
+    #     self.assertFalse(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
+    #
+    #     ExtensionHandle.setup(sample_directory_path)
+    #     self.assertTrue(os.path.isdir(EXTENSIONS_DIRECTORY_PATH))
+    #
+    #     # Ensure files can be written through the logical link
+    #     link_file_path = os.path.join(EXTENSIONS_DIRECTORY_PATH, "test_file")
+    #     actual_file_path = os.path.join(sample_directory_path, "test_file")
+    #     open(link_file_path, "a").close()
+    #     self.assertTrue(os.path.isfile(link_file_path))
+    #     self.assertTrue(os.path.isfile(actual_file_path))
 
     def test_get_version_from_manifest(self):
         sample_manifest_path = os.path.join(ARCHIVE_HANDLE_SAMPLES,

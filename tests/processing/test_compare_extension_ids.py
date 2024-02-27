@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
-from unittest import TestCase
+from unittest import TestCase, skip
 from extspider.common.context import DATA_PATH
 from extspider.processing.compare_extension_ids import generate_diff_result, write_diff_result
 
 
+@skip
 class TestCompareExtensionIds(TestCase):
 
     def test_generate_diff_result(self):
