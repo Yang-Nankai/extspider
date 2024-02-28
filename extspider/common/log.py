@@ -4,23 +4,19 @@ import os
 import sys
 import traceback
 import inspect
-import logging
+import logging.config
 import requests
 import html
 import unittest
 from socket import socket
 from typing import Callable
-from extspider.common.configuration import (LOG_PATH, FEISHU_WEBHOOK_URL,
-                                            IS_FEISHU_ENABLED)
+from extspider.common.configuration import (FEISHU_WEBHOOK_URL,
+                                            IS_FEISHU_ENABLED, LOG_CONFIG)
 from extspider.common.utils import request_retry_with_backoff
 from extspider.common.exception import MaxRequestRetryError
 
-# Use project root as destination folder for log file
-LOG_FILE_NAME = "runtime.log"
-LOG_FILE_PATH = os.path.join(LOG_PATH, LOG_FILE_NAME)
 
-
-# TODO: 这里可以用到donwload的下载逻辑中
+# TODO: 这里可以用到download的下载逻辑中
 def cleanup_file(file_path):
     """Decorator to clean up a file after executing a unit test."""
 
@@ -68,7 +64,6 @@ def use_test_samples(test_samples: list):
     return decorator
 
 
-# region CONNECTIVITY TEST
 # Global variable to cache the internet connectivity test result
 _is_internet_connected = None
 
@@ -141,7 +136,7 @@ class FeishuMessenger:
         return True
 
 
-def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+def get_logger(name: str) -> logging.Logger:
     """
     get_logger instantiates a logger object which will store all logs in a
     predefined log file -- the file is created if it does not exist.
@@ -157,40 +152,8 @@ def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
         logging.Logger: the created logger instance
     """
     logger = logging.getLogger(name)
-    logger.setLevel(level)
-    setup_logging_stream_handler(logger)  # log to terminal
-    setup_logging_file_handler(logger)
-
+    logging.config.dictConfig(LOG_CONFIG)
     return logger
-
-
-def setup_logging_stream_handler(logger: logging.Logger) -> None:
-    """
-    setup_logging_stream_handler attaches a stream handler to a logger object
-    to log to stdout
-
-    Args:
-        logger (logging.Logger): the logger object to be attached
-    """
-    handler = logging.StreamHandler(sys.stdout)  # log to terminal
-    handler.setFormatter(
-        logging.Formatter(
-            '%(name)s - %(levelname)s - %(message)s'))
-    logger.addHandler(handler)
-
-
-def setup_logging_file_handler(logger: logging.Logger) -> None:
-    """
-    setup_logging_file_handler attaches a file handler to a logger object
-
-    Args:
-        logger (logging.Logger): the logger object to be attached
-    """
-    handler = logging.FileHandler(LOG_FILE_PATH)
-    handler.setFormatter(
-        logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    logger.addHandler(handler)
 
 
 def generate_arguments_representation(*args, **kwargs):

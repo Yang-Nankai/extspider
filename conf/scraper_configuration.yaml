@@ -27,3 +27,31 @@ scraper_parameters:
 
 feishu_parameters:
   webhook_url: https://open.feishu.cn/open-apis/bot/v2/hook/a3c4f648-a30a-4dc2-b724-d705c8d2be81
+
+log_parameters:
+  version: 1
+  disable_existing_loggers: false
+  formatters:
+    simple:
+      format: '%(name)s - %(levelname)s - %(message)s'
+    time:
+      format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  handlers:
+    stderr:
+      class: logging.StreamHandler
+      level: ERROR
+      formatter: simple
+      stream: ext://sys.stdout
+    file:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: time
+      filename: logs/runtime.log
+      maxBytes: 1000000
+      backupCount: 3
+  loggers:
+    root:
+      level: DEBUG
+      handlers:
+      - stderr
+      - file

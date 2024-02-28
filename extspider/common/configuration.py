@@ -68,6 +68,14 @@ class ScraperConfiguration:
         else:
             self.set("is_feishu_enabled", False)
 
+        # TODO: 这个地方需要review一下
+        log_parameters = self.configuration.get("log_parameters")
+
+        if 'filename' in log_parameters['handlers']['file']:
+            relative_path = log_parameters['handlers']['file']['filename']
+            absolute_path = f"{context.PROJECT_ROOT}/{relative_path}"
+            log_parameters['handlers']['file']['filename'] = absolute_path
+
         return self.configuration
 
 
@@ -76,7 +84,6 @@ CONFIGURATION = ScraperConfiguration().load_configuration()
 # Output paths
 STORAGE_PATH = CONFIGURATION["storage_path"]
 DB_PATH = CONFIGURATION["db_path"]
-LOG_PATH = CONFIGURATION["log_path"]
 
 # Scraper
 COLLECTORS_AMOUNT = CONFIGURATION["scraper_parameters"]["collectors_amount"]
@@ -97,3 +104,7 @@ FEISHU_WEBHOOK_URL = None
 IS_FEISHU_ENABLED = CONFIGURATION["is_feishu_enabled"]
 if IS_FEISHU_ENABLED:
     FEISHU_WEBHOOK_URL = CONFIGURATION["feishu_parameters"]["webhook_url"]
+
+LOG_CONFIG = CONFIGURATION["log_parameters"]
+LOG_FILE_PATH = LOG_CONFIG["handlers"]["file"]["filename"]
+

@@ -2,7 +2,9 @@
 from unittest import TestCase, skipUnless
 import logging
 import os
-from extspider.common.configuration import IS_FEISHU_ENABLED
+from pathlib import Path
+from extspider.common.configuration import (IS_FEISHU_ENABLED,
+                                            LOG_FILE_PATH)
 from extspider.common import log
 
 
@@ -14,6 +16,7 @@ class TestLogging(TestCase):
 
     def setUp(self) -> None:
         self.rename_log_to_temporary_name()
+        pass
 
     def tearDown(self) -> None:
         self.remove_test_and_reinstate_actual_log()
@@ -25,7 +28,7 @@ class TestLogging(TestCase):
         Returns:
             str: logs generated while running the test suite
         """
-        with open(log.LOG_FILE_PATH, "r", encoding="utf-8") as log_file:
+        with open(LOG_FILE_PATH, "r", encoding="utf-8") as log_file:
             content = log_file.read()
 
         return content
@@ -37,7 +40,7 @@ class TestLogging(TestCase):
         """
         self.log_exists = True
         try:
-            os.rename(log.LOG_FILE_PATH, f"{log.LOG_FILE_PATH}.actual")
+            os.rename(LOG_FILE_PATH, f"{LOG_FILE_PATH}.actual")
         except FileNotFoundError:
             self.log_exists = False
 
@@ -47,10 +50,10 @@ class TestLogging(TestCase):
         if a log file existed before test, reverts it to original naming
         """
         logging.shutdown()
-        if os.path.exists(log.LOG_FILE_PATH):
-            os.remove(log.LOG_FILE_PATH)
+        if os.path.exists(LOG_FILE_PATH):
+            os.remove(LOG_FILE_PATH)
         if self.log_exists:
-            os.rename(f"{log.LOG_FILE_PATH}.actual", log.LOG_FILE_PATH)
+            os.rename(f"{LOG_FILE_PATH}.actual", LOG_FILE_PATH)
 
     def test_logger(self):
         """
@@ -64,7 +67,7 @@ class TestLogging(TestCase):
                                "ERROR",
                                "CRITICAL"]
 
-        logger = log.get_logger(logger_name, logging.DEBUG)
+        logger = log.get_logger(logger_name)
         logger.debug(logger_output)
         logger.info(logger_output)
         logger.warning(logger_output)
