@@ -4,7 +4,7 @@ import re
 import requests
 import sys
 from typing import Dict, List, Optional
-from extspider.common.context import DATA_PATH, DAILY_IDENTIFIERS_PATH, HTTP_HEADERS
+from extspider.common.context import DAILY_IDENTIFIERS_PATH, HTTP_HEADERS
 from extspider.collection.category.base_category_scraper import BaseCategoryScraper
 from extspider.common.exception import (MaxRequestRetryError,
                                         RequestError)
@@ -39,7 +39,7 @@ class ChromeCategoryScraper(BaseCategoryScraper):
         self.request_id = CHROME_CATEGORY_REQUEST_ID
         self.target_url = f"{BASE_REQUEST_URL}?rpcids={self.request_id}" \
                           f"&source-path={self.source_path}"
-        self.ids_writter = open(DAILY_IDENTIFIERS_PATH, "a", encoding='utf-8')
+        self.ids_writer = open(DAILY_IDENTIFIERS_PATH, "a", encoding='utf-8')
         # TODO: 日志处理这块，看完B站视频之后再处理
         # self.logger: Logger = get_logger("Chrome_category_scraper")
 
@@ -69,14 +69,14 @@ class ChromeCategoryScraper(BaseCategoryScraper):
             self.collect_and_store(details_data)
 
         print(f"Finished collecting {self.category_name}!")
-        self.ids_writter.close()
+        self.ids_writer.close()
 
     def collect_and_store(self, data_list):
         for row in data_list:
             extension_id = row[0][0]
 
             if extension_id not in self.found_ids:
-                self.ids_writter.write(str(extension_id + '\n'))
+                self.ids_writer.write(str(extension_id + '\n'))
                 self.found_ids.add(extension_id)
 
     def update_token_and_get_details_list(self, details_data: List[str]):

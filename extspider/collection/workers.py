@@ -145,9 +145,10 @@ class CollectorWorker(Worker):
         """
         self.log(f"Collecting {extension.identifier}...", logging.DEBUG)
         try:
-            extension.update_details()
-            # TODO: 这里需要review，将id+version作为唯一标识写入
-            #  以 {"extension_id" : "version"}写入?
+            is_updated = extension.update_details()
+            if is_updated:
+                # TODO: 先将记录permission的逻辑放在这里
+                extension.output_permission()
 
         except Exception as error:
             self.log(

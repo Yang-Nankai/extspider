@@ -10,7 +10,7 @@ import struct
 import shutil
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
-from typing import Dict, List, Iterable, Optional
+from typing import Dict, List, Iterable, Optional, Any
 from io import BufferedReader, BytesIO
 from extspider.collection.details.base_extension_details import BaseExtensionDetails
 from extspider.common.exception import MaxRequestRetryError
@@ -20,7 +20,7 @@ from extspider.storage.database_handle import DatabaseHandle
 from extspider.common.utils import request_retry_with_backoff, details_response_to_json_format
 from extspider.common.configuration import (CHROME_DETAIL_REQUEST_ID,
                                             PROXIES)
-from extspider.common.context import DATA_PATH, HTTP_HEADERS
+from extspider.common.context import DAILY_RESULTS_PATH, HTTP_HEADERS
 
 requests.packages.urllib3.disable_warnings()
 
@@ -34,6 +34,11 @@ class BadCrx(IOError):
 
 
 class ChromeExtensionDetails(BaseExtensionDetails):
+
+    # TODO: backup_writter 用来存储extension的permission内容，包括manifest_version!
+    #  所以要考虑将在Extension中的内容迁移到这个类下面!
+    permission_file = open(DAILY_RESULTS_PATH, 'w', newline='')
+    permission_writer = csv.writer(permission_file)
 
     @property
     def request_body(self) -> Dict:
@@ -53,6 +58,11 @@ class ChromeExtensionDetails(BaseExtensionDetails):
     @property
     def details_url(self) -> str:
         return BASE_REQUEST_URL
+
+    def get_manifest_attribute(self, attribute_name: str) -> Any:
+        if self.manifest is not None:
+            return self.manifest.get(attribute_name)
+        return None
 
     @request_retry_with_backoff(max_retries=5, retry_interval=2)
     def download(self, download_path: str) -> bool:
@@ -185,3 +195,18 @@ class ChromeExtensionDetails(BaseExtensionDetails):
             self.category, self.user_count, self.rating_count, self.rating_average,
             self.manifest, self.byte_size, self.last_update
         )
+
+    def output_permission(self):
+        manifest_version = self.get_manifest_attribute("manifest_version")
+        permissions = self.get_manifest_attribute("permissions")
+        optional_permissions = self.get_manifest_attribute("optional_permissions")
+        content_scripts_matches = self.get_manifest_attribute("content_scripts_matches")
+        host_permissions = self.get_manifest_attribute("host_permissions")
+        optional_host_permissions = self.get_manifest_attribute("optional_host_permissions")
+
+        self.permission_writer.writerow([
+            self.name, self.version, manifest_version, permissions,
+            optional_permissions, content_scripts_matches, host_permissions,
+            optional_host_permissions
+        ])
+        self.permission_file.flush()

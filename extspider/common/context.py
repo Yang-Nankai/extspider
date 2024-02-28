@@ -20,6 +20,10 @@ TEST_SAMPLES_PATH = os.path.join(ASSETS_PATH, "test_samples")
 IDENTIFIER_DIRECTORY_PATH = Path(DATA_PATH) / "chrome_daily_identifier"
 DAILY_IDENTIFIERS_PATH = IDENTIFIER_DIRECTORY_PATH / f"{today_string}_identifiers.txt"
 
+RESULT_DIRECTORY_PATH = Path(DATA_PATH) / "chrome_daily_result"
+DAILY_RESULTS_PATH = RESULT_DIRECTORY_PATH / f"{today_string}_results.csv"
+
+
 # Request Header
 HTTP_HEADERS = {
     "User-Agent": (

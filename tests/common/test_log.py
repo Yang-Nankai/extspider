@@ -6,6 +6,7 @@ from extspider.common.configuration import IS_FEISHU_ENABLED
 from extspider.common import log
 
 
+# TODO: 解决所有tests一起存在问题的bug
 class TestLogging(TestCase):
     """
     TestLogging ensures correct functionality of the logging suite

@@ -34,7 +34,7 @@ class TestChromeCategoryScraper(TestCase):
         with self.assertRaises(MaxRequestRetryError):
             bad_details = self.bad_scraper.request_simple_details()
             self.assertIsNone(bad_details)
-        self.bad_scraper.ids_writter.close()
+        self.bad_scraper.ids_writer.close()
 
     def test_collect_and_store(self):
         details_data = self.scraper.request_simple_details()
@@ -55,4 +55,4 @@ class TestChromeCategoryScraper(TestCase):
 
     def tearDown(self) -> None:
         # close the resource
-        self.scraper.ids_writter.close()
+        self.scraper.ids_writer.close()
