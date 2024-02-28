@@ -37,7 +37,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
     # TODO: backup_writter 用来存储extension的permission内容，包括manifest_version!
     #  所以要考虑将在Extension中的内容迁移到这个类下面!
-    permission_file = open(DAILY_RESULTS_PATH, 'w', newline='')
+    permission_file = open(DAILY_RESULTS_PATH, 'w', encoding='utf-8', newline='')
     permission_writer = csv.writer(permission_file)
 
     @property
@@ -138,6 +138,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
             del zip_file
 
     def get_zip_archive(self, crx_path: str) -> Optional[ZipFile]:
+        # TODO: [Important!]对于扩展`gcgdbnfebnhdbffnohjibaomkiepmfnb`无法在open中打开，是一个bug需要解决
         with open(crx_path, "rb") as crx_file:
             try:
                 self.strip_crx_headers(crx_file)

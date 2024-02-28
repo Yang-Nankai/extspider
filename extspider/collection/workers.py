@@ -160,7 +160,7 @@ class CollectorWorker(Worker):
             traceback.print_exc()
             return False
         else:
-            self.log(f"Successfully collected {extension.identifier}", logging.DEBUG)
+            # self.log(f"Successfully collected {extension.identifier}", logging.DEBUG)
             self.finished_queue.put(extension)
 
         return True

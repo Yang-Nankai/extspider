@@ -1,11 +1,1 @@
-my_app - DEBUG - debug message
-my_app - INFO - info message
-my_app - WARNING - warning message
-my_app - ERROR - error message
-my_app - CRITICAL - critical message
-my_app - ERROR - exception message
-Traceback (most recent call last):
-  File "D:\Ph0Jav7\科研任务\extspider\test_log.py", line 21, in main
-    1 / 0
-    ~~^~~
-ZeroDivisionError: division by zero
+2024-02-28 18:26:37,395 - collector_worker-#5 - ERROR - Encountered BadCrx upon downloading gcgdbnfebnhdbffnohjibaomkiepmfnb

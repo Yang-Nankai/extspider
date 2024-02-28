@@ -9,7 +9,7 @@ scraper_parameters:
   # Maximum amount of time to wait for new identifiers to load
   timeout_seconds: 3600
   # Frequency of progress updates
-  update_seconds: 60
+  update_seconds: 10
   # Version of Chrome Browser
   prod_version: 121.0.6167.161
   # URL to the Chrome Web Store
@@ -44,11 +44,12 @@ log_parameters:
       stream: ext://sys.stdout
     file:
       class: logging.handlers.RotatingFileHandler
-      level: DEBUG
+      level: ERROR
       formatter: time
       filename: logs/runtime.log
       maxBytes: 1000000
       backupCount: 3
+      encoding: utf8
   loggers:
     root:
       level: DEBUG

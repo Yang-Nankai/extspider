@@ -18,7 +18,7 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
         return ChromeExtensionDetails
 
     def setUp(self):
-        self.extension = ChromeExtensionDetails("mchkhbjkklkldgfkmdcnahgeekhpldae")
+        self.extension = ChromeExtensionDetails("ejonaglbdpcfkgbcnidjlnjogfdgbofp")
         self.bad_extension = ChromeExtensionDetails("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
     def test_get_extension_detail(self):
