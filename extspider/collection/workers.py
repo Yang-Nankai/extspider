@@ -182,6 +182,9 @@ class CollectorWorker(Worker):
                 extension.version
             )
             extension.download(download_path)
+            # TODO: 将load_manifest从download逻辑中转移出来了，这下不会出现问题
+            #  但是这里做的事情太多了，需要refactor&review
+            extension.load_manifest(download_path)
 
         except Exception as error:
             self.log(

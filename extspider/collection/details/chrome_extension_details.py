@@ -88,8 +88,6 @@ class ChromeExtensionDetails(BaseExtensionDetails):
             response.raise_for_status()
             with open(download_path, "wb") as extension_file:
                 shutil.copyfileobj(response.raw, extension_file)
-                # TODO: load_manifest，这里是不是不应该出现，代码是否复杂，需要review
-                self.load_manifest(download_path)
         except MaxRequestRetryError as e:
             # TODO: 这里需要日志记录
             print(f"Failed to download {self.identifier}: {str(e)}")
@@ -166,6 +164,8 @@ class ChromeExtensionDetails(BaseExtensionDetails):
     def assert_magic_number(crx_bytes: bytes) -> None:
         magic_number = crx_bytes.decode("utf-8")
         if magic_number != "Cr24":
+            # TODO: 这里再多给一次处理逻辑
+
             raise BadCrx(f"'Unexpected magic number: {magic_number}.")
 
     @staticmethod

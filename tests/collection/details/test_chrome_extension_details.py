@@ -18,7 +18,7 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
         return ChromeExtensionDetails
 
     def setUp(self):
-        self.extension = ChromeExtensionDetails("eafmacjdgennnmhagdkdckgjokmnllci")
+        self.extension = ChromeExtensionDetails("fdigobpfkndelcjmihianfobjpnkkghc")
         self.bad_extension = ChromeExtensionDetails("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
     def test_get_extension_detail(self):
@@ -46,11 +46,12 @@ class TestChromeExtensionDetails(BT.DetailsTestCase):
         has_changed = self.extension.update_details()
         self.assertFalse(has_changed)
 
-    def test_download(self):
+    def test_download_and_load_manifest(self):
         # Extension exists
         self.extension.download(str(TEST_DOWNLOAD_PATH))
         crx_file_exists = TEST_DOWNLOAD_PATH.exists()
         self.assertTrue(crx_file_exists)
+        self.extension.load_manifest(str(TEST_DOWNLOAD_PATH))
         manifest_file_exists = TEST_MANIFEST_PATH.exists()
         self.assertTrue(manifest_file_exists)
 
