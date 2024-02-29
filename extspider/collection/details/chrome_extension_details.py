@@ -37,6 +37,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
     # TODO: backup_writter 用来存储extension的permission内容，包括manifest_version!
     #  所以要考虑将在Extension中的内容迁移到这个类下面!
+    # TODO: 如果没有这个文件夹的时候要递归创建！
     permission_file = open(DAILY_RESULTS_PATH, 'w', encoding='utf-8', newline='')
     permission_writer = csv.writer(permission_file)
 
@@ -206,7 +207,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
         optional_host_permissions = self.get_manifest_attribute("optional_host_permissions")
 
         self.permission_writer.writerow([
-            self.name, self.version, manifest_version, permissions,
+            self.identifier, self.version, manifest_version, permissions,
             optional_permissions, content_scripts_matches, host_permissions,
             optional_host_permissions
         ])

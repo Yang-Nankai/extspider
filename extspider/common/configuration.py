@@ -3,7 +3,7 @@ import os
 from typing import Any, Optional
 from extspider.common import context
 
-DEFAULT_PATH = os.path.join(context.CONF_PATH, "scraper_configuration.yaml")
+DEFAULT_PATH = os.path.join(context.CONF_PATH, "configuration.yaml")
 
 
 class ConfigurationError(Exception):
