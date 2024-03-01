@@ -65,7 +65,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
             return self.manifest.get(attribute_name)
         return None
 
-    @request_retry_with_backoff(max_retries=5, retry_interval=2)
+    @request_retry_with_backoff(max_retries=5, retry_interval=1)
     def download(self, download_path: str) -> bool:
         """Downloads the extension crx file and extract the manifest.json
         to specific path.
@@ -94,7 +94,7 @@ class ChromeExtensionDetails(BaseExtensionDetails):
 
         return Path(download_path).exists()
 
-    @request_retry_with_backoff(max_retries=5, retry_interval=2)
+    @request_retry_with_backoff(max_retries=5, retry_interval=1)
     def get_extension_detail(self) -> Optional[List[str]]:
         try:
             response = requests.post(self.details_url,
