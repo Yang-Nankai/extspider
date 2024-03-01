@@ -125,6 +125,8 @@ class ChromeExtensionDetails(BaseExtensionDetails):
     def load_manifest(self, crx_path: str):
         crx_path_obj = Path(crx_path)
         manifest_path = crx_path_obj.parent / "manifest.json"
+        if Path(manifest_path).exists():
+            return
         if not manifest_path.is_file():
             self.extract_manifest(crx_path)
 
