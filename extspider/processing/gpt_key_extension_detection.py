@@ -1,6 +1,7 @@
 import re
 import os
 import json
+from typing import List
 from io import BytesIO
 from zipfile import ZipFile, BadZipFile
 from extspider.storage.database_handle import DatabaseHandle
@@ -15,7 +16,7 @@ GPT_KEY_EXTRACT_FILE = os.path.join(DATA_PATH, "gpt_key_extract_result.json")
 pattern = re.compile(rb'sk-[a-zA-Z0-9]{48}')
 
 
-def find_gpt_key_in_zip(crx_path: str):
+def find_gpt_key_in_zip(crx_path: str) -> List:
     found_strings = []
 
     if not os.path.exists(crx_path):
@@ -31,7 +32,7 @@ def find_gpt_key_in_zip(crx_path: str):
                         file_content = file.read()
                         matches = pattern.findall(file_content)
                         for match in matches:
-                            found_strings.append([file_name, match])
+                            found_strings.append((file_name, match.decode('utf-8')))
         except BadZipFile:
             return []
 
