@@ -31,7 +31,7 @@ def find_gpt_key_in_zip(crx_path: str):
                         file_content = file.read()
                         matches = pattern.findall(file_content)
                         for match in matches:
-                            found_strings.append((file_name, match))
+                            found_strings.append([file_name, match])
         except BadZipFile:
             return []
 
