@@ -139,7 +139,6 @@ class ChromeExtensionDetails(BaseExtensionDetails):
             del zip_file
 
     def get_zip_archive(self, crx_path: str) -> Optional[ZipFile]:
-        # TODO: [Important!]对于扩展`gcgdbnfebnhdbffnohjibaomkiepmfnb`无法在open中打开，是一个bug需要解决
         with open(crx_path, "rb") as crx_file:
             try:
                 self.strip_crx_headers(crx_file)
@@ -166,8 +165,6 @@ class ChromeExtensionDetails(BaseExtensionDetails):
     def assert_magic_number(crx_bytes: bytes) -> None:
         magic_number = crx_bytes.decode("utf-8")
         if magic_number != "Cr24":
-            # TODO: 这里再多给一次处理逻辑
-
             raise BadCrx(f"'Unexpected magic number: {magic_number}.")
 
     @staticmethod

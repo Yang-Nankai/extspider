@@ -187,7 +187,6 @@ class CollectorWorker(Worker):
             extension.load_manifest(download_path)
 
         except Exception as error:
-            # TODO: 添加中括号让到时候针对错误的能够快速定位
             self.log(
                 f"Encountered {type(error).__name__} "
                 f"upon downloading {[extension.identifier]}",

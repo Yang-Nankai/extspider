@@ -2,3 +2,7 @@
 data
 assets
 log/*
+venv
+extspider/__pycache__/*
+runtime.log
+tests/*
