@@ -33,22 +33,23 @@ def find_gpt_key_in_zip(crx_path: str):
     return found_strings
 
 
-# 1.查询得到名字里面存在gpt的extension_id、version
-session = DatabaseHandle.get_session()
+def main():
+    # 1.查询得到名字里面存在gpt的extension_id、version
+    session = DatabaseHandle.get_session()
 
-extensions = session.query(
-    Extension.id, Extension.version
-).filter(Extension.name.like('%gpt%')).all()
+    extensions = session.query(
+        Extension.id, Extension.version
+    ).filter(Extension.name.like('%gpt%')).all()
 
-# 2.根据id+version得到crx，然后存放在结果集中
+    # 2.根据id+version得到crx，然后存放在结果集中
 
-for extension in extensions:
-    download_path = ExtensionHandle.get_extension_storage_path(
-        extension[0],
-        extension[1]
-    )
+    for extension in extensions:
+        download_path = ExtensionHandle.get_extension_storage_path(
+            extension[0],
+            extension[1]
+        )
 
-    result = find_gpt_key_in_zip(download_path)
-    if len(result) > 0:
-        print(f"The crx {extension[0]} {extension[1]} exists the gpt-key:\n"
-              f"{result}\n\n")
+        result = find_gpt_key_in_zip(download_path)
+        if len(result) > 0:
+            print(f"The crx {extension[0]} {extension[1]} exists the gpt-key:\n"
+                  f"{result}\n\n")
