@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 import re
 import os
 from io import BytesIO
@@ -7,6 +8,9 @@ from extspider.storage.database_handle import DatabaseHandle
 from extspider.storage.models.extension import Extension
 from extspider.storage.extension_handle import ExtensionHandle
 from extspider.storage.crx_archive import CrxArchive
+from extspider.common.context import DATA_PATH
+
+GPT_KEY_EXTRACT_FILE = os.path.join(DATA_PATH, "gpt_key_extract_result.json")
 
 
 def find_gpt_key_in_zip(crx_path: str):
@@ -15,7 +19,7 @@ def find_gpt_key_in_zip(crx_path: str):
 
     if not os.path.exists(crx_path):
         print(f"No Such Crx File: {crx_path}")
-        return None
+        return []
 
     with open(crx_path, "rb") as crx_file:
         try:
@@ -28,12 +32,13 @@ def find_gpt_key_in_zip(crx_path: str):
                         for match in matches:
                             found_strings.append((file_name, match))
         except BadZipFile:
-            return None
+            return []
 
     return found_strings
 
 
 def main():
+    total_result = []
     # 1.查询得到名字里面存在gpt的extension_id、version
     session = DatabaseHandle.get_session()
 
@@ -50,6 +55,18 @@ def main():
         )
 
         result = find_gpt_key_in_zip(download_path)
+        info = {
+            extension[0]: [
+                extension[1],
+                result
+            ]
+        }
+        total_result.append(info)
+
         if len(result) > 0:
             print(f"The crx {extension[0]} {extension[1]} exists the gpt-key:\n"
-                  f"{result}\n\n")
+                  f"{result}\n")
+
+    # 3. 存放在目标文件中
+    with open(GPT_KEY_EXTRACT_FILE, "w") as file:
+        json.dump(total_result, file)
