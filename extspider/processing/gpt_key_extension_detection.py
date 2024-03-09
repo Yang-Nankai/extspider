@@ -39,7 +39,7 @@ def find_gpt_key_in_zip(crx_path: str) -> List:
     return found_strings
 
 
-def main():
+def get_all_gpt_key():
     try:
         total_result = []
         session = DatabaseHandle.get_session()

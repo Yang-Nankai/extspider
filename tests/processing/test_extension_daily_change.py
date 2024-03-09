@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 # TODO: 完成extension的改变，根据id+version
 #  得到的数据增加的放一起、减少的放一起、版本改变的放一起
-import re
 import os
-from datetime import datetime, timedelta
-from pathlib import Path
 from unittest import TestCase
-from typing import Iterable, Optional, List, Set
 from extspider.processing.extension_daily_change import (get_id_difference_set,
                                                          get_version_change_id_set,
                                                          extract_data_by_id_set)
@@ -47,6 +43,8 @@ class TestExtensionDailyChange(TestCase):
         result_data = extract_data_by_id_set(str(self.now_result_path), change_set)
         print(result_data)
         self.assertGreater(len(result_data), 0)
+
+
 
 
 
