@@ -11,7 +11,7 @@ scraper_parameters:
   # Frequency of progress updates
   update_seconds: 60
   # Version of Chrome Browser
-  prod_version: 121.0.6167.161
+  prod_version: 122.0.6261.112
   # URL to the Chrome Web Store
   store_url: https://chrome.google.com/webstore/category/extensions
   # Chrome request category id

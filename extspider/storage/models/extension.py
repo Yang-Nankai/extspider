@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from typing import Optional, List, Any, Dict
 from decimal import Decimal
 from datetime import date

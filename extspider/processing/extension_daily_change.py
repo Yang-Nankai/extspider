@@ -106,9 +106,9 @@ def extract_data_by_id_set(file_path: str, id_set: Set) -> List:
     return result_data
 
 
-def store_daily_result(store_path: str, result_data: List):
+def store_result(store_path: str, result_data: List):
     store_writer = csv.writer(
-        open(store_path, 'w', encoding='utf-8', newline='')
+        open(store_path, 'a', encoding='utf-8', newline='')
     )
     store_writer.writerows(result_data)
 
@@ -124,7 +124,7 @@ def find_daily_deleted(now_day_path: str, pre_day_path: str, save_filename: str)
 
     # 将结果存储到结果文件夹中
     store_file = os.path.join(CHROME_DAILY_PROCESSING, save_filename)
-    store_daily_result(store_file, deleted_extensions)
+    store_result(store_file, deleted_extensions)
 
 
 

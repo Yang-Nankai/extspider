@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import os
+from io import BytesIO
 from zipfile import ZipFile
 from typing import List, Set, Optional
 from extspider.storage.extension_handle import ExtensionHandle
@@ -17,11 +18,12 @@ def get_extensions_from_ids(ids_list: List[Set], output_dir: str):
             version
         )
         extension = ChromeExtensionDetails(id)
-        zip_file = extension.get_zip_archive(download_path)
+        with open(download_path, "rb") as crx_file:
+            extension.strip_crx_headers(crx_file)
+            zip_bytes = crx_file.read()
         output_zip_path = os.path.join(output_dir, f"{id}.{version}.zip")
-        with ZipFile(zip_file) as zip_memory_file:
-            with open(output_zip_path, 'wb') as zip_output_file:
-                zip_output_file.write(zip_memory_file.read())
+        with open(output_zip_path, 'wb') as zip_output_file:
+            zip_output_file.write(zip_bytes)
 
 
 if __name__ == '__main__':

@@ -145,7 +145,7 @@ class ExtensionHandle:
 
     @classmethod
     def extract_archive(cls, extension_id, crx_path) -> bool:
-        crx = cls.store_extension_archive(extension_id, crx_path)
+        crx = cls.store_exteextension_archive(extension_id, crx_path)
 
         if crx.is_corrupted:
             return False
